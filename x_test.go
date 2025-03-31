@@ -195,107 +195,107 @@ func ExampleScanSignatures() {
 
 	// Output:
 	// Name *ast.FuncDecl func() string
-	// testdata/testdata.go:44:1
-	// testdata/testdata.go:46:2
+	// testdata/testdata.go:45:1
+	// testdata/testdata.go:47:2
 	// String *ast.FuncDecl func() string
-	// testdata/testdata.go:48:1
-	// testdata/testdata.go:50:2
+	// testdata/testdata.go:49:1
+	// testdata/testdata.go:51:2
 	// Value *ast.FuncDecl func() any
-	// testdata/testdata.go:52:1
-	// testdata/testdata.go:54:2
+	// testdata/testdata.go:53:1
+	// testdata/testdata.go:55:2
 	// Example *ast.FuncDecl func()
-	// testdata/testdata.go:67:1
-	// testdata/testdata.go:67:18
+	// testdata/testdata.go:68:1
+	// testdata/testdata.go:68:18
 	// FuncSingleReturn *ast.FuncDecl func() any
-	// testdata/testdata.go:70:1
-	// testdata/testdata.go:80:2
+	// testdata/testdata.go:71:1
+	// testdata/testdata.go:81:2
 	// *ast.FuncLit func() any
-	// testdata/testdata.go:71:6
-	// testdata/testdata.go:74:3
+	// testdata/testdata.go:72:6
+	// testdata/testdata.go:75:3
 	// FuncSelectExprReturn *ast.FuncDecl func() string
-	// testdata/testdata.go:83:1
-	// testdata/testdata.go:87:2
+	// testdata/testdata.go:84:1
+	// testdata/testdata.go:88:2
 	// FuncWithCall *ast.FuncDecl func() (any, github.com/xoctopus/pkgx/testdata.String)
-	// testdata/testdata.go:90:1
-	// testdata/testdata.go:92:2
+	// testdata/testdata.go:91:1
+	// testdata/testdata.go:93:2
 	// FuncReturnInterfaceCallMulti *ast.FuncDecl func() (any, error)
-	// testdata/testdata.go:94:1
-	// testdata/testdata.go:96:2
+	// testdata/testdata.go:95:1
+	// testdata/testdata.go:97:2
 	// *ast.CallExpr func(p []byte) (n int, err error)
-	// testdata/testdata.go:95:9
-	// testdata/testdata.go:95:34
+	// testdata/testdata.go:96:9
+	// testdata/testdata.go:96:34
 	// FuncReturnInterfaceCallSingle *ast.FuncDecl func() any
-	// testdata/testdata.go:98:1
-	// testdata/testdata.go:100:2
+	// testdata/testdata.go:99:1
+	// testdata/testdata.go:101:2
 	// *ast.CallExpr func() error
-	// testdata/testdata.go:99:9
-	// testdata/testdata.go:99:31
+	// testdata/testdata.go:100:9
+	// testdata/testdata.go:100:31
 	// FuncReturnsNamedValue *ast.FuncDecl func() (a any, b github.com/xoctopus/pkgx/testdata.String)
-	// testdata/testdata.go:102:1
-	// testdata/testdata.go:105:2
+	// testdata/testdata.go:103:1
+	// testdata/testdata.go:106:2
 	// FuncReturnsNamedValueAndOtherFunc *ast.FuncDecl func() (a any, b github.com/xoctopus/pkgx/testdata.String, err error)
-	// testdata/testdata.go:107:1
-	// testdata/testdata.go:111:2
+	// testdata/testdata.go:108:1
+	// testdata/testdata.go:112:2
 	// *ast.CallExpr func(message string) error
-	// testdata/testdata.go:110:15
-	// testdata/testdata.go:110:32
+	// testdata/testdata.go:111:15
+	// testdata/testdata.go:111:32
 	// FuncReturnsInSwitch *ast.FuncDecl func(v string) (a any, b github.com/xoctopus/pkgx/testdata.String)
-	// testdata/testdata.go:113:1
-	// testdata/testdata.go:128:2
+	// testdata/testdata.go:114:1
+	// testdata/testdata.go:129:2
 	// FuncReturnsInIf *ast.FuncDecl func(v string) (a any, b github.com/xoctopus/pkgx/testdata.String)
-	// testdata/testdata.go:130:1
-	// testdata/testdata.go:146:2
+	// testdata/testdata.go:131:1
+	// testdata/testdata.go:147:2
 	// FuncCallWithFuncLit *ast.FuncDecl func() (a any, b github.com/xoctopus/pkgx/testdata.String)
-	// testdata/testdata.go:148:1
-	// testdata/testdata.go:153:2
+	// testdata/testdata.go:149:1
+	// testdata/testdata.go:154:2
 	// *ast.FuncLit func() any
-	// testdata/testdata.go:149:10
-	// testdata/testdata.go:151:3
+	// testdata/testdata.go:150:10
+	// testdata/testdata.go:152:3
 	// With *ast.FuncDecl func() github.com/xoctopus/pkgx/testdata.with
-	// testdata/testdata.go:157:1
-	// testdata/testdata.go:159:2
+	// testdata/testdata.go:158:1
+	// testdata/testdata.go:160:2
 	// With *ast.FuncDecl func() github.com/xoctopus/pkgx/testdata.with
-	// testdata/testdata.go:161:1
-	// testdata/testdata.go:163:2
+	// testdata/testdata.go:162:1
+	// testdata/testdata.go:164:2
 	// Call *ast.FuncDecl func() (*string, error)
-	// testdata/testdata.go:165:1
-	// testdata/testdata.go:167:2
+	// testdata/testdata.go:166:1
+	// testdata/testdata.go:168:2
 	// *ast.CallExpr func(v string) *string
-	// testdata/testdata.go:166:9
-	// testdata/testdata.go:166:21
+	// testdata/testdata.go:167:9
+	// testdata/testdata.go:167:21
 	// FuncWithCallChain *ast.FuncDecl func() (any, error)
-	// testdata/testdata.go:169:1
-	// testdata/testdata.go:171:2
+	// testdata/testdata.go:170:1
+	// testdata/testdata.go:172:2
 	// Response *ast.FuncDecl func() *int
-	// testdata/testdata.go:177:1
-	// testdata/testdata.go:179:2
+	// testdata/testdata.go:178:1
+	// testdata/testdata.go:180:2
 	// FuncWithSub *ast.FuncDecl func() (any, error)
-	// testdata/testdata.go:181:1
-	// testdata/testdata.go:183:2
+	// testdata/testdata.go:182:1
+	// testdata/testdata.go:184:2
 	// *ast.CallExpr func(ctx context.Context, op *github.com/xoctopus/pkgx/testdata.Op) (*int, error)
-	// testdata/testdata.go:182:9
-	// testdata/testdata.go:182:44
+	// testdata/testdata.go:183:9
+	// testdata/testdata.go:183:44
 	// *ast.CallExpr func() context.Context
-	// testdata/testdata.go:182:16
-	// testdata/testdata.go:182:36
+	// testdata/testdata.go:183:16
+	// testdata/testdata.go:183:36
 	// curry *ast.FuncDecl func(b bool) func() int
-	// testdata/testdata.go:185:1
-	// testdata/testdata.go:198:2
+	// testdata/testdata.go:186:1
+	// testdata/testdata.go:199:2
 	// *ast.FuncLit func() func() int
-	// testdata/testdata.go:187:10
-	// testdata/testdata.go:191:4
+	// testdata/testdata.go:188:10
+	// testdata/testdata.go:192:4
 	// *ast.FuncLit func() int
-	// testdata/testdata.go:188:11
-	// testdata/testdata.go:190:5
+	// testdata/testdata.go:189:11
+	// testdata/testdata.go:191:5
 	// *ast.FuncLit func() func() int
-	// testdata/testdata.go:193:9
-	// testdata/testdata.go:197:3
+	// testdata/testdata.go:194:9
+	// testdata/testdata.go:198:3
 	// *ast.FuncLit func() int
-	// testdata/testdata.go:194:10
-	// testdata/testdata.go:196:4
+	// testdata/testdata.go:195:10
+	// testdata/testdata.go:197:4
 	// FuncCurryCall *ast.FuncDecl func() any
-	// testdata/testdata.go:200:1
-	// testdata/testdata.go:202:2
+	// testdata/testdata.go:201:1
+	// testdata/testdata.go:203:2
 }
 
 func TestXpkg(t *testing.T) {
