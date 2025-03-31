@@ -45,3 +45,8 @@ fmt:
 		fi \
 	done
 
+clean:
+	@find . -name cover.out | xargs rm -rf
+	@find . -name x.sum | xargs rm -rf
+
+

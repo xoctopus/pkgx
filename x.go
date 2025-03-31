@@ -21,10 +21,10 @@ import (
 func NewPackages(patterns ...string) *Packages {
 	u := &Packages{
 		fileset:  token.NewFileSet(),
-		packages: mapx.NewXmap[string, Package](),
-		modules:  mapx.NewSet[string](),
-		directs:  mapx.NewSet[string](),
-		sum:      &sum{hashes: make(map[string]string)},
+		packages: mapx.NewSafeXmap[string, Package](),
+		modules:  mapx.NewSafeSet[string](),
+		directs:  mapx.NewSafeSet[string](),
+		sum:      mapx.NewSafeXmap[string, Sum](),
 	}
 
 	loaded, err := gopkg.Load(&gopkg.Config{
@@ -50,7 +50,11 @@ func NewPackages(patterns ...string) *Packages {
 			if u.modules.Exists(p.Module.Path) {
 				u.directs.Store(p.PkgPath)
 				u.modules.Store(p.Module.Path)
-				u.sum.AddPackage(p)
+				s, _ := u.sum.LoadOrStore(p.Module.Path, &sum{
+					dir:    p.Module.Dir,
+					hashes: make(map[string]string),
+				})
+				s.(*sum).add(p)
 			}
 		}
 	}
@@ -79,7 +83,7 @@ type Packages struct {
 	packages mapx.Map[string, Package]
 	modules  mapx.Set[string]
 	directs  mapx.Set[string]
-	sum      *sum
+	sum      mapx.Map[string, Sum]
 }
 
 func (u *Packages) Package(path string) Package {
@@ -87,8 +91,9 @@ func (u *Packages) Package(path string) Package {
 	return p
 }
 
-func (u *Packages) Sum() Sum {
-	return u.sum
+func (u *Packages) SumOfModule(module string) Sum {
+	s, _ := u.sum.Load(module)
+	return s
 }
 
 type Package interface {

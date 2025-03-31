@@ -16,16 +16,21 @@ func TestLoadSumFile(t *testing.T) {
 	cwd := filepath.Dir(filename)
 	_ = os.RemoveAll(filepath.Join(cwd, "testdata", pkgx.SumFilename))
 
+	defer func() {
+		_ = os.RemoveAll(filepath.Join(cwd, "testdata", pkgx.SumFilename))
+	}()
+
 	t.Run("NilModule", func(t *testing.T) {
 		NewWithT(t).Expect(pkgx.LoadSumFile(nil)).To(BeNil())
 		p := u.Package("io")
 		NewWithT(t).Expect(pkgx.LoadSumFile(p.Module())).To(BeNil())
 	})
 
-	u := pkgx.NewPackages("github.com/xoctopus/pkgx/testdata")
-	p := u.Package("github.com/xoctopus/pkgx/testdata")
+	mod := "github.com/xoctopus/pkgx/testdata"
+	u := pkgx.NewPackages(mod)
+	p := u.Package(mod)
 	NewWithT(t).Expect(p).NotTo(BeNil())
-	NewWithT(t).Expect(p.Module().Path).To(Equal("github.com/xoctopus/pkgx/testdata"))
+	NewWithT(t).Expect(p.Module().Path).To(Equal(mod))
 	t.Run("NoSumFile", func(t *testing.T) {
 		NewWithT(t).Expect(pkgx.LoadSumFile(p.Module())).To(BeNil())
 	})
@@ -39,7 +44,7 @@ func TestLoadSumFile(t *testing.T) {
 		// 	NewWithT(t).Expect(u.Sum().Save().Error()).To(Equal(t.Name()))
 		// })
 
-		NewWithT(t).Expect(u.Sum().Save()).To(BeNil())
+		NewWithT(t).Expect(u.SumOfModule(mod).Save()).To(BeNil())
 
 		s := pkgx.LoadSumFile(p.Module())
 		NewWithT(t).Expect(s).NotTo(BeNil())
