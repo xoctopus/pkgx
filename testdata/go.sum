@@ -1,0 +1,4 @@
+github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
+github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
+github.com/xoctopus/x v0.0.34 h1:0FuIMJV87lPaWGLx2ka1cHbKRxGMXY/yARPpkiycaW8=
+github.com/xoctopus/x v0.0.34/go.mod h1:qaJaXudhhnFt1CB5DUH1K2mssP4U9NeqbOo2cfUa7xM=
