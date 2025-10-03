@@ -1,4 +1,4 @@
-package pkgx_test
+package internal_test
 
 import (
 	"os"
@@ -6,54 +6,91 @@ import (
 	"runtime"
 	"testing"
 
-	. "github.com/onsi/gomega"
+	"github.com/xoctopus/x/misc/must"
+	. "github.com/xoctopus/x/testx"
+	gopkg "golang.org/x/tools/go/packages"
 
-	"github.com/xoctopus/pkgx"
+	"github.com/xoctopus/pkgx/internal"
 )
 
-func TestLoadSumFile(t *testing.T) {
+var (
+	testdata *gopkg.Package // = "github.com/xoctopus/pkgx/testdata"
+	sub      *gopkg.Package
+	cwd      string
+)
+
+func init() {
 	_, filename, _, _ := runtime.Caller(0)
-	cwd := filepath.Dir(filename)
-	_ = os.RemoveAll(filepath.Join(cwd, "testdata", pkgx.SumFilename))
+	cwd = filepath.Dir(filename)
 
-	defer func() {
-		_ = os.RemoveAll(filepath.Join(cwd, "testdata", pkgx.SumFilename))
-	}()
+	pkgs, err := gopkg.Load(&gopkg.Config{
+		Mode: gopkg.LoadMode(0b11111111111111111),
+	}, "github.com/xoctopus/pkgx/testdata")
+	must.NoError(err)
+	must.BeTrue(len(pkgs) == 1)
+	testdata = pkgs[0]
 
-	t.Run("NilModule", func(t *testing.T) {
-		NewWithT(t).Expect(pkgx.LoadSumFile(nil)).To(BeNil())
-		p := u.Package("io")
-		NewWithT(t).Expect(pkgx.LoadSumFile(p.Module())).To(BeNil())
+	pkgs, err = gopkg.Load(&gopkg.Config{
+		Mode: gopkg.LoadMode(0b11111111111111111),
+	}, "github.com/xoctopus/pkgx/testdata/sub")
+	must.NoError(err)
+	must.BeTrue(len(pkgs) == 1)
+	sub = pkgs[0]
+}
+
+func TestLoadSumFile(t *testing.T) {
+	filename := filepath.Join(cwd, "../testdata", internal.SumFilename)
+	_ = os.RemoveAll(filename)
+
+	t.Run("NoModule", func(t *testing.T) {
+		Expect(t, internal.LoadSumFile(nil), BeNil[internal.Sum]())
+
+		pkgs, err := gopkg.Load(nil, "io")
+		Expect(t, err, BeNil[error]())
+		Expect(t, pkgs, HaveLen[[]*gopkg.Package](1))
+		Expect(t, internal.LoadSumFile(pkgs[0].Module), BeNil[internal.Sum]())
 	})
 
-	mod := "github.com/xoctopus/pkgx/testdata"
-	u := pkgx.NewPackages(mod)
-	p := u.Package(mod)
-	NewWithT(t).Expect(p).NotTo(BeNil())
-	NewWithT(t).Expect(p.Module().Path).To(Equal(mod))
+	path := "github.com/xoctopus/pkgx/testdata"
+	Expect(t, testdata.Module.Path, Equal(path))
+
 	t.Run("NoSumFile", func(t *testing.T) {
-		NewWithT(t).Expect(pkgx.LoadSumFile(p.Module())).To(BeNil())
+		Expect(t, internal.LoadSumFile(testdata.Module), BeNil[internal.Sum]())
 	})
 
-	t.Run("Loaded", func(t *testing.T) {
-		// xgo is not support go1.24
-		// t.Run("FailedToOpenFile", func(t *testing.T) {
-		// 	mock.Patch(os.OpenFile, func(string, int, os.FileMode) (*os.File, error) {
-		// 		return nil, errors.New(t.Name())
-		// 	})
-		// 	NewWithT(t).Expect(u.Sum().Save().Error()).To(Equal(t.Name()))
-		// })
+	sum := internal.NewSum(testdata.Module.Dir)
+	Expect(t, sum.Dir(), Equal(filepath.Dir(filename)))
 
-		NewWithT(t).Expect(u.ModuleSum(mod).Save()).To(BeNil())
+	t.Run("AddPackagesHashes", func(t *testing.T) {
+		sum.Add(testdata)
+		h := sum.Hash(testdata.PkgPath)
+		Expect(t, h, NotEqual(""))
 
-		s := pkgx.LoadSumFile(p.Module())
-		NewWithT(t).Expect(s).NotTo(BeNil())
-		NewWithT(t).Expect(s.Dir()).To(Equal(p.Module().Dir))
-
-		h := s.Hash("github.com/xoctopus/pkgx/testdata/sub")
-		NewWithT(t).Expect(len(h) > 0).To(BeTrue())
-		h = s.Hash("github.com/xoctopus/pkgx/testdata")
-		NewWithT(t).Expect(len(h) > 0).To(BeTrue())
+		sum.Add(sub)
+		h = sum.Hash(sub.PkgPath)
+		Expect(t, h, NotEqual(""))
 	})
 
+	t.Run("SaveAndLoad", func(t *testing.T) {
+		Expect(t, sum.Save(), Succeed())
+
+		sum2 := internal.LoadSumFile(testdata.Module)
+		Expect(t, sum2, NotBeNil[internal.Sum]())
+		Expect(t, sum2.Hash(testdata.PkgPath), Equal(sum.Hash(testdata.PkgPath)))
+		Expect(t, sum2.Hash(sub.PkgPath), Equal(sum.Hash(sub.PkgPath)))
+
+		t.Run("FailedLoad", func(t *testing.T) {
+			t.Run("FailedToOpenFile", func(t *testing.T) {
+				info, _ := os.Stat(sum.Dir())
+				mode := info.Mode()
+
+				_ = os.Chmod(sum.Dir(), 0000)
+				defer func() {
+					_ = os.Chmod(sum.Dir(), mode)
+				}()
+
+				Expect(t, sum.Save(), ErrorContains("permission denied"))
+			})
+		})
+	})
 }

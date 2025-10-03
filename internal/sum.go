@@ -1,4 +1,4 @@
-package pkgx
+package internal
 
 import (
 	"bytes"
@@ -11,14 +11,7 @@ import (
 	gopkg "golang.org/x/tools/go/packages"
 )
 
-const SumFilename = "x.sum"
-
-type Sum interface {
-	Dir() string
-	Bytes() []byte
-	Save() error
-	Hash(string) string
-}
+const SumFilename = "go.xsum"
 
 func LoadSumFile(m *gopkg.Module) Sum {
 	if m == nil || m.Dir == "" {
@@ -44,31 +37,41 @@ func LoadSumFile(m *gopkg.Module) Sum {
 	return s
 }
 
+// Sum helps to calculate module's sum file
+type Sum interface {
+	// Dir returns module's source dir
+	Dir() string
+	// Add adds hash of package
+	Add(*gopkg.Package)
+	// Save saves xsum file to module's source dir
+	Save() error
+	// Hash returns hash of package by package path
+	Hash(string) string
+}
+
+func NewSum(dir string) Sum {
+	return &sum{dir: dir, hashes: make(map[string]string)}
+}
+
 type sum struct {
-	dir    string
+	// dir module source dir
+	dir string
+	// hashes of packages
 	hashes map[string]string
 }
 
-func (s *sum) add(p *gopkg.Package) {
-	h, _ := dirhash.HashDir(p.Dir, "", dirhash.Hash1)
-	s.hashes[p.PkgPath] = h
+func (s *sum) Dir() string { return s.dir }
+
+func (s *sum) Add(p *gopkg.Package) {
+	if _, ok := s.hashes[p.PkgPath]; !ok {
+		h, _ := dirhash.HashDir(p.Dir, "", dirhash.Hash1)
+		s.hashes[p.PkgPath] = h
+	}
 }
 
-func (s *sum) Dir() string {
-	return s.dir
-}
+func (s *sum) Hash(path string) string { return s.hashes[path] }
 
 func (s *sum) Save() error {
-	f, err := os.OpenFile(filepath.Join(s.dir, SumFilename), os.O_RDWR|os.O_CREATE|os.O_TRUNC, os.ModePerm)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-	_, err = f.Write(s.Bytes())
-	return err
-}
-
-func (s *sum) Bytes() []byte {
 	b := bytes.NewBuffer(nil)
 
 	for _, path := range slices.Sorted(maps.Keys(s.hashes)) {
@@ -78,9 +81,15 @@ func (s *sum) Bytes() []byte {
 		b.WriteString("\n")
 	}
 
-	return b.Bytes()
-}
-
-func (s *sum) Hash(path string) string {
-	return s.hashes[path]
+	f, err := os.OpenFile(
+		filepath.Join(s.dir, SumFilename),
+		os.O_RDWR|os.O_CREATE|os.O_TRUNC,
+		os.ModePerm,
+	)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	_, err = f.Write(b.Bytes())
+	return err
 }

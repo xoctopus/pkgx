@@ -10,12 +10,23 @@ import (
 	"path/filepath"
 	"slices"
 	"sort"
-	"sync"
 
 	"github.com/xoctopus/x/mapx"
 	"github.com/xoctopus/x/misc/must"
 	"github.com/xoctopus/x/ptrx"
 	gopkg "golang.org/x/tools/go/packages"
+
+	"github.com/xoctopus/pkgx/internal"
+)
+
+type (
+	Constants = internal.Objects[*types.Const, *internal.Constant]
+	Functions = internal.Objects[*types.Func, *internal.Function]
+	TypeNames = internal.Objects[*types.TypeName, *internal.TypeName]
+
+	TPackage  = types.Package
+	GoPackage = gopkg.Package
+	GoModule  = gopkg.Module
 )
 
 func NewPackages(patterns ...string) *Packages {
@@ -24,19 +35,19 @@ func NewPackages(patterns ...string) *Packages {
 		packages: mapx.NewSafeXmap[string, Package](),
 		modules:  mapx.NewSafeSet[string](),
 		directs:  mapx.NewSafeSet[string](),
-		sum:      mapx.NewSafeXmap[string, Sum](),
+		sums:     mapx.NewSafeXmap[string, internal.Sum](),
 	}
 
-	loaded, err := gopkg.Load(&gopkg.Config{
+	packages, err := gopkg.Load(&gopkg.Config{
 		Fset: u.fileset,
 		Mode: gopkg.LoadMode(0b11111111111111111),
 	}, patterns...)
-	must.NoErrorWrap(err, "failed to load packages: %v", patterns)
+	must.NoErrorF(err, "failed to load packages: %v", patterns)
 
-	var register func(p *gopkg.Package)
+	var register func(p *GoPackage)
 
-	register = func(p *gopkg.Package) {
-		x := newX(p)
+	register = func(p *GoPackage) {
+		x := newx(p)
 		x.(*xpkg).u = u
 
 		for _, path := range slices.Sorted(maps.Keys(p.Imports)) {
@@ -50,28 +61,25 @@ func NewPackages(patterns ...string) *Packages {
 			if u.modules.Exists(p.Module.Path) {
 				u.directs.Store(p.PkgPath)
 				u.modules.Store(p.Module.Path)
-				s, _ := u.sum.LoadOrStore(p.Module.Path, &sum{
-					dir:    p.Module.Dir,
-					hashes: make(map[string]string),
-				})
-				s.(*sum).add(p)
+				s, _ := u.sums.LoadOrStore(p.Module.Path, internal.NewSum(p.Module.Dir))
+				s.Add(p)
 			}
 		}
 	}
 
-	sort.Slice(loaded, func(i, j int) bool {
-		return loaded[i].PkgPath < loaded[j].PkgPath
+	sort.Slice(packages, func(i, j int) bool {
+		return packages[i].PkgPath < packages[j].PkgPath
 	})
 
-	for _, p := range loaded {
-		must.BeTrueWrap(len(p.Errors) == 0, "loaded package `%s` error", p.PkgPath)
+	for _, p := range packages {
+		must.BeTrueF(len(p.Errors) == 0, "loaded package `%s` error", p.PkgPath)
 		if p.Module != nil {
 			u.modules.Store(p.Module.Path)
 		}
 		u.directs.Store(p.PkgPath)
 	}
 
-	for _, p := range loaded {
+	for _, p := range packages {
 		register(p)
 	}
 
@@ -83,7 +91,7 @@ type Packages struct {
 	packages mapx.Map[string, Package]
 	modules  mapx.Set[string]
 	directs  mapx.Set[string]
-	sum      mapx.Map[string, Sum]
+	sums     mapx.Map[string, internal.Sum]
 }
 
 func (u *Packages) Package(path string) Package {
@@ -91,17 +99,17 @@ func (u *Packages) Package(path string) Package {
 	return p
 }
 
-func (u *Packages) SumOfModule(module string) Sum {
-	s, _ := u.sum.Load(module)
+func (u *Packages) ModuleSum(module string) internal.Sum {
+	s, _ := u.sums.Load(module)
 	return s
 }
 
 type Package interface {
-	Unwrap() *types.Package
-	GoPackage() *gopkg.Package
+	Unwrap() *TPackage
+	GoPackage() *GoPackage
+	GoModule() *GoModule
+	PackageByPath(string) Package
 
-	Package(string) Package
-	Module() *gopkg.Module
 	SourceDir() string
 	Eval(ast.Expr) (types.TypeAndValue, error)
 	Files() []*ast.File
@@ -109,36 +117,80 @@ type Package interface {
 	Position(token.Pos) token.Position
 	ObjectOf(*ast.Ident) types.Object
 
-	Doc(ast.Node) *Document
-
-	Type(string) *Typename
-	TypeByNode(ast.Node) *Typename
-	NamedTypes() []*Typename
-
-	Const(string) *Constant
-	ConstByNode(ast.Node) *Constant
-	Constants() []*Constant
-
-	Func(string) *Function
-	FuncByNode(n ast.Node) *Function
-	Functions() []*Function
-	Signatures() []*Signature
+	TypeNames() internal.Objects[*types.TypeName, *internal.TypeName]
+	Constants() internal.Objects[*types.Const, *internal.Constant]
+	Functions() internal.Objects[*types.Func, *internal.Function]
 }
 
-func newX(p *gopkg.Package) Package {
+func newx(p *gopkg.Package) Package {
 	must.BeTrue(p != nil && len(p.Errors) == 0)
 	x := &xpkg{
-		p: p,
+		p:         p,
+		imports:   mapx.NewXmap[string, Package](),
+		typenames: internal.NewObjects[*types.TypeName, *internal.TypeName](),
+		constants: internal.NewObjects[*types.Const, *internal.Constant](),
+		functions: internal.NewObjects[*types.Func, *internal.Function](),
+	}
+	methods := make(map[types.Type][]*internal.Function)
 
-		imports: mapx.NewXmap[string, Package](),
-
-		documents:  ScanDocuments(p),
-		typenames:  ScanTypenames(p),
-		constants:  ScanConstants(p),
-		functions:  ScanFunctions(p),
-		signatures: ScanSignatures(p),
+	for _, file := range p.Syntax {
+		ast.Inspect(file, func(node ast.Node) bool {
+			switch d := node.(type) {
+			case *ast.GenDecl:
+				if d.Tok != token.TYPE && d.Tok != token.CONST {
+					return true
+				}
+				for _, spec := range d.Specs {
+					switch s := spec.(type) {
+					case *ast.ValueSpec:
+						doc := internal.ParseDocument(d.Doc, s.Doc).WithDesc(s.Comment)
+						for _, ident := range s.Names {
+							x.constants.Add(&internal.Constant{
+								Object: internal.NewObject(
+									s,
+									ident,
+									p.TypesInfo.Defs[ident].(*types.Const),
+									doc,
+								),
+							})
+						}
+					case *ast.TypeSpec:
+						x.typenames.Add(internal.NewTypeName(
+							internal.NewObject(
+								s,
+								s.Name,
+								p.TypesInfo.Defs[s.Name].(*types.TypeName),
+								internal.ParseDocument(d.Doc, s.Doc).WithDesc(s.Comment),
+							),
+						))
+					}
+				}
+			case *ast.FuncDecl:
+				doc := internal.ParseDocument(d.Doc)
+				u := p.TypesInfo.Defs[d.Name].(*types.Func)
+				o := internal.NewObject(node, d.Name, u, doc)
+				f := &internal.Function{Object: o}
+				if recv := u.Signature().Recv(); recv == nil {
+					x.functions.Add(f)
+				} else {
+					t := types.Unalias(internal.Deref(recv.Type()))
+					methods[t] = append(methods[t], f)
+				}
+			}
+			return true
+		})
 	}
 
+	x.functions.Init()
+	x.constants.Init()
+	x.typenames.Init()
+
+	for t := range x.typenames.Elements() {
+		t.AddMethods(methods[t.Type()]...)
+	}
+
+	// TODO inspecting signatures should contains FuncDecl, FuncLit and CallExpr
+	// TODO should analyze signatures returned results
 	return x
 }
 
@@ -150,13 +202,11 @@ type xpkg struct {
 	fileset *token.FileSet
 	imports mapx.Map[string, Package]
 
-	documents *Set[*Document]
-	typenames *Set[*Typename]
-	constants *Set[*Constant]
-	functions *Set[*Function]
-
-	signatures *Set[*Signature]
-	results    sync.Map
+	typenames TypeNames
+	constants Constants
+	functions Functions
+	// TODO signatures and results
+	// signatures internal.Objects[*types.Signature, *internal.Signature]
 }
 
 func (x *xpkg) Unwrap() *types.Package {
@@ -167,7 +217,11 @@ func (x *xpkg) GoPackage() *gopkg.Package {
 	return x.p
 }
 
-func (x *xpkg) Package(path string) Package {
+func (x *xpkg) GoModule() *gopkg.Module {
+	return x.p.Module
+}
+
+func (x *xpkg) PackageByPath(path string) Package {
 	if _, ok := x.p.Imports[path]; !ok {
 		return nil
 	}
@@ -200,10 +254,6 @@ func (x *xpkg) SourceDir() (dir string) {
 	return filepath.Join(x.p.Module.Dir, x.p.PkgPath[len(x.p.Module.Path):])
 }
 
-func (x *xpkg) Module() *gopkg.Module {
-	return x.p.Module
-}
-
 func (x *xpkg) Eval(e ast.Expr) (types.TypeAndValue, error) {
 	code := bytes.NewBuffer(nil)
 	if err := format.Node(code, x.p.Fset, e); err != nil {
@@ -229,46 +279,14 @@ func (x *xpkg) ObjectOf(i *ast.Ident) types.Object {
 	return x.p.TypesInfo.ObjectOf(i)
 }
 
-func (x *xpkg) Doc(n ast.Node) *Document {
-	return x.documents.ValueByNode(n)
+func (x *xpkg) Constants() Constants {
+	return x.constants
 }
 
-func (x *xpkg) Func(name string) *Function {
-	return x.functions.ValueByName(name)
+func (x *xpkg) Functions() Functions {
+	return x.functions
 }
 
-func (x *xpkg) FuncByNode(n ast.Node) *Function {
-	return x.functions.ValueByNode(n)
-}
-
-func (x *xpkg) Functions() []*Function {
-	return x.functions.Values()
-}
-
-func (x *xpkg) Signatures() []*Signature {
-	return x.signatures.Values()
-}
-
-func (x *xpkg) Type(name string) *Typename {
-	return x.typenames.ValueByName(name)
-}
-
-func (x *xpkg) TypeByNode(n ast.Node) *Typename {
-	return x.typenames.ValueByNode(n)
-}
-
-func (x *xpkg) NamedTypes() []*Typename {
-	return x.typenames.Values()
-}
-
-func (x *xpkg) Const(name string) *Constant {
-	return x.constants.ValueByName(name)
-}
-
-func (x *xpkg) ConstByNode(n ast.Node) *Constant {
-	return x.constants.ValueByNode(n)
-}
-
-func (x *xpkg) Constants() []*Constant {
-	return x.constants.Values()
+func (x *xpkg) TypeNames() TypeNames {
+	return x.typenames
 }
