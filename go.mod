@@ -5,8 +5,8 @@ go 1.25.1
 require (
 	github.com/onsi/gomega v1.38.2
 	github.com/xoctopus/pkgx/testdata v0.0.0-20250331091630-3af90d68c457
-	github.com/xoctopus/x v0.1.3-0.20251002140023-95a93a707591
-	golang.org/x/exp v0.0.0-20250911091902-df9299821621
+	github.com/xoctopus/x v0.1.3-0.20251003143910-71f19ea2f227
+	golang.org/x/exp v0.0.0-20251002181428-27f1f14c8bb9
 	golang.org/x/mod v0.28.0
 	golang.org/x/tools v0.37.0
 )

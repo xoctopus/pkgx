@@ -199,7 +199,7 @@ type xpkg struct {
 	u   *Packages
 	dir *string
 
-	fileset *token.FileSet
+	// fileset *token.FileSet
 	imports mapx.Map[string, Package]
 
 	typenames TypeNames

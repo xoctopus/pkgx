@@ -89,7 +89,7 @@ func (s *sum) Save() error {
 	if err != nil {
 		return err
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 	_, err = f.Write(b.Bytes())
 	return err
 }

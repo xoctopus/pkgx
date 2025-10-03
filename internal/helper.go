@@ -71,9 +71,7 @@ func (p Node) End() token.Pos {
 
 func NodesOf[N ast.Node](e ...N) Nodes[N] {
 	nodes := make(Nodes[N], len(e))
-	for i, n := range e {
-		nodes[i] = n
-	}
+	copy(nodes, e)
 	return nodes
 }
 

@@ -198,7 +198,7 @@ var (
 	_ ast.Node = &ast.KeyValueExpr{}
 	_ ast.Node = &ast.LabeledStmt{}
 	_ ast.Node = &ast.MapType{}
-	_ ast.Node = &ast.Package{}
+	// _ ast.Node = &ast.Package{}
 	_ ast.Node = &ast.ParenExpr{}
 	_ ast.Node = &ast.RangeStmt{}
 	_ ast.Node = &ast.ReturnStmt{}
