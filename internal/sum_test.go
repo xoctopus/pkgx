@@ -44,7 +44,7 @@ func TestLoadSumFile(t *testing.T) {
 		// 	NewWithT(t).Expect(u.Sum().Save().Error()).To(Equal(t.Name()))
 		// })
 
-		NewWithT(t).Expect(u.SumOfModule(mod).Save()).To(BeNil())
+		NewWithT(t).Expect(u.ModuleSum(mod).Save()).To(BeNil())
 
 		s := pkgx.LoadSumFile(p.Module())
 		NewWithT(t).Expect(s).NotTo(BeNil())

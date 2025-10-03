@@ -12,3 +12,7 @@ func (v *Structure) Name() string {
 func (v Structure) String() string {
 	return "structure"
 }
+
+func (v Structure) With(...any) *Structure {
+	return &v
+}
