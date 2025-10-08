@@ -20,9 +20,15 @@ import (
 )
 
 type (
-	Constants = internal.Objects[*types.Const, *internal.Constant]
-	Functions = internal.Objects[*types.Func, *internal.Function]
-	TypeNames = internal.Objects[*types.TypeName, *internal.TypeName]
+	Doc       = internal.Doc
+	ModuleSum = internal.Sum
+	Constant  = internal.Constant
+	Function  = internal.Function
+	TypeName  = internal.TypeName
+
+	Constants = internal.Objects[*types.Const, *Constant]
+	Functions = internal.Objects[*types.Func, *Function]
+	TypeNames = internal.Objects[*types.TypeName, *TypeName]
 
 	TPackage  = types.Package
 	GoPackage = gopkg.Package
@@ -35,7 +41,7 @@ func NewPackages(patterns ...string) *Packages {
 		packages: mapx.NewSafeXmap[string, Package](),
 		modules:  mapx.NewSafeSet[string](),
 		directs:  mapx.NewSafeSet[string](),
-		sums:     mapx.NewSafeXmap[string, internal.Sum](),
+		sums:     mapx.NewSafeXmap[string, ModuleSum](),
 	}
 
 	packages, err := gopkg.Load(&gopkg.Config{
@@ -91,7 +97,7 @@ type Packages struct {
 	packages mapx.Map[string, Package]
 	modules  mapx.Set[string]
 	directs  mapx.Set[string]
-	sums     mapx.Map[string, internal.Sum]
+	sums     mapx.Map[string, ModuleSum]
 }
 
 func (u *Packages) Package(path string) Package {
@@ -99,7 +105,7 @@ func (u *Packages) Package(path string) Package {
 	return p
 }
 
-func (u *Packages) ModuleSum(module string) internal.Sum {
+func (u *Packages) ModuleSum(module string) ModuleSum {
 	s, _ := u.sums.Load(module)
 	return s
 }
@@ -117,9 +123,9 @@ type Package interface {
 	Position(token.Pos) token.Position
 	ObjectOf(*ast.Ident) types.Object
 
-	TypeNames() internal.Objects[*types.TypeName, *internal.TypeName]
-	Constants() internal.Objects[*types.Const, *internal.Constant]
-	Functions() internal.Objects[*types.Func, *internal.Function]
+	TypeNames() TypeNames
+	Constants() Constants
+	Functions() Functions
 }
 
 func newx(p *gopkg.Package) Package {
@@ -127,11 +133,11 @@ func newx(p *gopkg.Package) Package {
 	x := &xpkg{
 		p:         p,
 		imports:   mapx.NewXmap[string, Package](),
-		typenames: internal.NewObjects[*types.TypeName, *internal.TypeName](),
-		constants: internal.NewObjects[*types.Const, *internal.Constant](),
-		functions: internal.NewObjects[*types.Func, *internal.Function](),
+		typenames: internal.NewObjects[*types.TypeName, *TypeName](),
+		constants: internal.NewObjects[*types.Const, *Constant](),
+		functions: internal.NewObjects[*types.Func, *Function](),
 	}
-	methods := make(map[types.Type][]*internal.Function)
+	methods := make(map[types.Type][]*Function)
 
 	for _, file := range p.Syntax {
 		ast.Inspect(file, func(node ast.Node) bool {
@@ -145,7 +151,7 @@ func newx(p *gopkg.Package) Package {
 					case *ast.ValueSpec:
 						doc := internal.ParseDocument(d.Doc, s.Doc).WithDesc(s.Comment)
 						for _, ident := range s.Names {
-							x.constants.Add(&internal.Constant{
+							x.constants.Add(&Constant{
 								Object: internal.NewObject(
 									s,
 									ident,
