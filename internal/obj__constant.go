@@ -10,5 +10,5 @@ type Constant struct {
 }
 
 func (c *Constant) Value() constant.Value {
-	return c.Underlying().Val()
+	return c.Exposer().Val()
 }

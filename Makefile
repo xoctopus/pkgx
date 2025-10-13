@@ -108,9 +108,9 @@ view-cover: cover
 
 fmt: dep clean
 	@echo "==> format code"
-	@goimports-reviser -list-diff -rm-unused -set-alias -output write \
-		-imports-order 'std,general,company,project' \
-		-excludes '.git/,.xgo/,*.pb.go,*_generated.go' ./...
+	@goimports-reviser -rm-unused \
+		-imports-order 'std,general,company,project' -project-name ${MOD} \
+		-excludes '.git/,.xgo/,*.pb.go,*_generated.go,*_genx.go' ./...
 
 lint: dep
 	@echo "==> static check"

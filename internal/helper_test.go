@@ -8,8 +8,9 @@ import (
 	"testing"
 
 	. "github.com/onsi/gomega"
-	. "github.com/xoctopus/pkgx/internal"
 	"github.com/xoctopus/x/misc/must"
+
+	. "github.com/xoctopus/pkgx/internal"
 )
 
 func ExampleSourceOfNode() {

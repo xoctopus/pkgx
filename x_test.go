@@ -2,16 +2,16 @@ package pkgx_test
 
 import (
 	"fmt"
-	"go/ast"
 	"os"
 	"path/filepath"
 	"sort"
 	"testing"
 
-	. "github.com/xoctopus/pkgx"
-	_ "github.com/xoctopus/pkgx/testdata"
 	"github.com/xoctopus/x/mapx"
 	. "github.com/xoctopus/x/testx"
+
+	. "github.com/xoctopus/pkgx"
+	_ "github.com/xoctopus/pkgx/testdata"
 )
 
 var (
@@ -155,65 +155,3 @@ func ExamplePackage_functions() {
 	// tags: desc:[F a function list call expressions]
 	// F func()
 }
-
-var (
-	_ ast.Node = &ast.ArrayType{}
-	_ ast.Node = &ast.AssignStmt{}
-	_ ast.Node = &ast.BadDecl{}
-	_ ast.Node = &ast.BadExpr{}
-	_ ast.Node = &ast.BadStmt{}
-	_ ast.Node = &ast.BasicLit{}
-	_ ast.Node = &ast.BinaryExpr{}
-	_ ast.Node = &ast.BranchStmt{}
-	_ ast.Node = &ast.CallExpr{}
-	_ ast.Node = &ast.CaseClause{}
-	_ ast.Node = &ast.ChanType{}
-	_ ast.Node = &ast.CommClause{}
-	_ ast.Node = &ast.Comment{}
-	_ ast.Node = &ast.CommentGroup{}
-	_ ast.Node = &ast.CompositeLit{}
-	_ ast.Node = ast.Decl(nil)
-	_ ast.Node = &ast.DeclStmt{}
-	_ ast.Node = &ast.DeferStmt{}
-	_ ast.Node = &ast.Ellipsis{}
-	_ ast.Node = &ast.EmptyStmt{}
-	_ ast.Node = ast.Expr(nil)
-	_ ast.Node = &ast.ExprStmt{}
-	_ ast.Node = &ast.Field{}
-	_ ast.Node = &ast.FieldList{}
-	_ ast.Node = &ast.File{}
-	_ ast.Node = &ast.ForStmt{}
-	_ ast.Node = &ast.FuncDecl{}
-	_ ast.Node = &ast.FuncLit{}
-	_ ast.Node = &ast.FuncType{}
-	_ ast.Node = &ast.GenDecl{}
-	_ ast.Node = &ast.GoStmt{}
-	_ ast.Node = &ast.Ident{}
-	_ ast.Node = &ast.IfStmt{}
-	_ ast.Node = &ast.ImportSpec{}
-	_ ast.Node = &ast.IncDecStmt{}
-	_ ast.Node = &ast.IndexExpr{}
-	_ ast.Node = &ast.IndexListExpr{}
-	_ ast.Node = &ast.InterfaceType{}
-	_ ast.Node = &ast.KeyValueExpr{}
-	_ ast.Node = &ast.LabeledStmt{}
-	_ ast.Node = &ast.MapType{}
-	// _ ast.Node = &ast.Package{}
-	_ ast.Node = &ast.ParenExpr{}
-	_ ast.Node = &ast.RangeStmt{}
-	_ ast.Node = &ast.ReturnStmt{}
-	_ ast.Node = &ast.SelectStmt{}
-	_ ast.Node = &ast.SelectorExpr{}
-	_ ast.Node = &ast.SendStmt{}
-	_ ast.Node = &ast.SliceExpr{}
-	_ ast.Node = ast.Spec(nil)
-	_ ast.Node = &ast.StarExpr{}
-	_ ast.Node = ast.Stmt(nil)
-	_ ast.Node = &ast.StructType{}
-	_ ast.Node = &ast.SwitchStmt{}
-	_ ast.Node = &ast.TypeAssertExpr{}
-	_ ast.Node = &ast.TypeSpec{}
-	_ ast.Node = &ast.TypeSwitchStmt{}
-	_ ast.Node = &ast.UnaryExpr{}
-	_ ast.Node = &ast.ValueSpec{}
-)

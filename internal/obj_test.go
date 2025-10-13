@@ -5,9 +5,10 @@ import (
 	"go/types"
 	"testing"
 
+	. "github.com/xoctopus/x/testx"
+
 	"github.com/xoctopus/pkgx"
 	. "github.com/xoctopus/pkgx/internal"
-	. "github.com/xoctopus/x/testx"
 )
 
 var (
@@ -24,7 +25,7 @@ func TestNewObject(t *testing.T) {
 		Expect(t, o.Node(), BeNil[ast.Node]())
 		Expect(t, o.Name(), HaveLen[string](0))
 		Expect(t, o.Ident(), BeNil[*ast.Ident]())
-		Expect(t, o.Underlying(), BeNil[*types.Func]())
+		Expect(t, o.Exposer(), BeNil[*types.Func]())
 		Expect(t, o.Doc(), BeNil[*Doc]())
 		Expect(t, o.Type(), BeNil[types.Type]())
 		Expect(t, o.TypeName(), HaveLen[string](0))
@@ -71,19 +72,19 @@ func TestObject(t *testing.T) {
 	functions.Add(&Function{Object: NewObject(nil, nil, &types.Func{}, nil)})
 	Expect(t, functions.Len(), Equal(2))
 
-	fu := functions.Underlying(node)
-	Expect(t, fu, Equal[*types.Func](f.Underlying()))
-	fu = functions.Underlying(Node{1, 1})
+	fu := functions.ExposerOf(node)
+	Expect(t, fu, Equal[*types.Func](f.Exposer()))
+	fu = functions.ExposerOf(Node{1, 1})
 	Expect(t, fu, BeNil[*types.Func]())
 
-	for fu = range functions.Underlyings() {
+	for fu = range functions.Exposers() {
 		if fu.Name() == "F" {
-			Expect(t, fu, Equal(f.Underlying()))
+			Expect(t, fu, Equal(f.Exposer()))
 			break
 		}
 	}
 
-	fo := functions.Element(node)
+	fo := functions.ElementOf(node)
 	Expect(t, fo, Equal(f))
 
 	for fo = range functions.Elements() {

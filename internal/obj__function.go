@@ -7,7 +7,7 @@ import (
 type Function struct{ Object[*types.Func] }
 
 func (f *Function) PtrRecv() bool {
-	recv := f.Underlying().Signature().Recv()
+	recv := f.Exposer().Signature().Recv()
 	if recv == nil {
 		return false
 	}

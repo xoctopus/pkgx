@@ -8,15 +8,15 @@ import (
 	"github.com/xoctopus/x/mapx"
 )
 
-type Underlying interface {
-	// TODO maybe has *types.Signature
+// Exposer presents package level exposer excludes *types.Var
+type Exposer interface {
 	*types.Func | *types.Const | *types.TypeName
 }
 
 // Object defines parsed universal objects
-type Object[U Underlying] interface {
+type Object[U Exposer] interface {
 	IsNil() bool
-	Underlying() U
+	Exposer() U
 	Name() string
 	Node() ast.Node
 	Ident() *ast.Ident
@@ -25,12 +25,11 @@ type Object[U Underlying] interface {
 	TypeName() string
 }
 
-func NewObject[U Underlying](n ast.Node, i *ast.Ident, obj U, c *Doc) Object[U] {
-	// TODO ensure ident
+func NewObject[U Exposer](n ast.Node, i *ast.Ident, obj U, c *Doc) Object[U] {
 	return &object[U]{node: n, id: i, u: obj, doc: c}
 }
 
-type object[U Underlying] struct {
+type object[U Exposer] struct {
 	u    U
 	node ast.Node
 	id   *ast.Ident
@@ -56,7 +55,7 @@ func (o *object[U]) Ident() *ast.Ident {
 	return o.id
 }
 
-func (o *object[U]) Underlying() U {
+func (o *object[U]) Exposer() U {
 	return o.u
 }
 
@@ -94,23 +93,23 @@ func (o *object[U]) TypeName() string {
 
 // Objects defines an interface for lookup and traverse Object by ast.Node or
 // object name
-type Objects[U Underlying, V Object[U]] interface {
+type Objects[U Exposer, V Object[U]] interface {
 	Init()
 	Len() int
 	Nodes() iter.Seq[ast.Node]
 	Add(...V)
-	Underlying(ast.Node) U
-	Underlyings() iter.Seq[U]
-	Element(ast.Node) V
+	ExposerOf(ast.Node) U
+	Exposers() iter.Seq[U]
+	ElementOf(ast.Node) V
 	Elements() iter.Seq[V]
 	ElementByName(string) V
 }
 
-func NewObjects[U Underlying, V Object[U]]() Objects[U, V] {
+func NewObjects[U Exposer, V Object[U]]() Objects[U, V] {
 	return &objects[U, V]{set: mapx.NewXmap[Node, V]()}
 }
 
-type objects[U Underlying, V Object[U]] struct {
+type objects[U Exposer, V Object[U]] struct {
 	set   mapx.Map[Node, V]
 	nodes []ast.Node
 	vals  []V
@@ -157,24 +156,24 @@ func (s *objects[U, V]) Add(elems ...V) {
 	}
 }
 
-func (s *objects[U, V]) Underlying(node ast.Node) U {
+func (s *objects[U, V]) ExposerOf(node ast.Node) U {
 	if u, ok := s.set.Load(NodeOf(node)); ok {
-		return u.Underlying()
+		return u.Exposer()
 	}
 	return *new(U)
 }
 
-func (s *objects[U, V]) Underlyings() iter.Seq[U] {
+func (s *objects[U, V]) Exposers() iter.Seq[U] {
 	return func(yield func(U) bool) {
 		for _, v := range s.vals {
-			if !yield(v.Underlying()) {
+			if !yield(v.Exposer()) {
 				return
 			}
 		}
 	}
 }
 
-func (s *objects[U, V]) Element(node ast.Node) V {
+func (s *objects[U, V]) ElementOf(node ast.Node) V {
 	e, _ := s.set.Load(NodeOf(node))
 	return e
 }
