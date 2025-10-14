@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 	"testing"
 
 	"github.com/xoctopus/x/mapx"
@@ -65,7 +66,17 @@ func TestNewPackage(t *testing.T) {
 	_ = pkg.FileSet()
 }
 
-func ExamplePackage_constants() {
+func ExamplePackage_Docs() {
+	for d := range pkg.Docs() {
+		fmt.Println(d)
+	}
+
+	// Output:
+	// tags:[genx:apis][genx:enum][genx:model] desc:[Package testdata contains testdata for pkgx.][package desc following here]
+	// tags: desc:[Package testdata package level document][comments for testdata package]
+}
+
+func ExamplePackage_Constants() {
 	for e := range pkg.Constants().Elements() {
 		fmt.Println(e.Doc())
 		fmt.Printf("%s = %v\n", e.Name(), e.Value())
@@ -92,7 +103,7 @@ func ExamplePackage_constants() {
 	// Multi1 = 1
 }
 
-func ExamplePackage_typenames() {
+func ExamplePackage_TypeNames() {
 	for o := range pkg.TypeNames().Elements() {
 		fmt.Println(o.Doc())
 		fmt.Println(o.Ident().Name)
@@ -142,7 +153,7 @@ func ExamplePackage_typenames() {
 	//
 }
 
-func ExamplePackage_functions() {
+func ExamplePackage_Functions() {
 	for o := range pkg.Functions().Elements() {
 		fmt.Println(o.Doc())
 		fmt.Printf("%s %s\n\n", o.Ident().Name, o.Type())
@@ -154,4 +165,57 @@ func ExamplePackage_functions() {
 	//
 	// tags: desc:[F a function list call expressions]
 	// F func()
+}
+
+func ExamplePackages() {
+	paths := make([]string, 0)
+	fmt.Println("imported in company:")
+	for path, _ := range u.Packages() {
+		if strings.HasPrefix(path, "github.com/xoctopus") {
+			paths = append(paths, path)
+		}
+	}
+	sort.Strings(paths)
+	for _, path := range paths {
+		fmt.Println(path)
+	}
+
+	fmt.Println("directs")
+	paths = paths[:0]
+	for path := range u.Directs() {
+		paths = append(paths, path)
+	}
+	sort.Strings(paths)
+	for _, path := range paths {
+		fmt.Println(path)
+	}
+
+	fmt.Println("modules")
+	paths = paths[:0]
+	for path := range u.Modules() {
+		paths = append(paths, path)
+	}
+	sort.Strings(paths)
+	for _, path := range paths {
+		fmt.Println(path)
+	}
+
+	// Output:
+	// imported in company:
+	// github.com/xoctopus/pkgx
+	// github.com/xoctopus/pkgx/internal
+	// github.com/xoctopus/pkgx/testdata
+	// github.com/xoctopus/pkgx/testdata/sub
+	// github.com/xoctopus/x/mapx
+	// github.com/xoctopus/x/misc/must
+	// github.com/xoctopus/x/ptrx
+	// github.com/xoctopus/x/slicex
+	// directs
+	// github.com/xoctopus/pkgx
+	// github.com/xoctopus/pkgx/internal
+	// github.com/xoctopus/pkgx/testdata
+	// github.com/xoctopus/pkgx/testdata/sub
+	// modules
+	// github.com/xoctopus/pkgx
+	// github.com/xoctopus/pkgx/testdata
 }

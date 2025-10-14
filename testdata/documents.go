@@ -3,16 +3,18 @@
 // comments for testdata package
 package testdata
 
-// IntConstType defines a named constant type with integer underlying in a single `GenDecl`
-// line1
-// line2
-//
-// +key1=val_key1_1
-// +key1=val_key1_2
-// +key2=val_key2
-// +key3
-// +key4=
-// +key4=val_key4
+/*
+IntConstType defines a named constant type with integer underlying in a single `GenDecl`
+line1
+line2
+
++key1=val_key1_1
++key1=val_key1_2
++key2=val_key2
++key3
++key4=
++key4=val_key4
+*/
 type IntConstType int // this is an inline comment
 
 const (

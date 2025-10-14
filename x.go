@@ -6,6 +6,7 @@ import (
 	"go/format"
 	"go/token"
 	"go/types"
+	"iter"
 	"maps"
 	"path/filepath"
 	"slices"
@@ -37,6 +38,7 @@ type (
 
 func NewPackages(patterns ...string) *Packages {
 	u := &Packages{
+		entries:  patterns,
 		fileset:  token.NewFileSet(),
 		packages: mapx.NewSafeXmap[string, Package](),
 		modules:  mapx.NewSafeSet[string](),
@@ -93,6 +95,7 @@ func NewPackages(patterns ...string) *Packages {
 }
 
 type Packages struct {
+	entries  []string
 	fileset  *token.FileSet
 	packages mapx.Map[string, Package]
 	modules  mapx.Set[string]
@@ -100,14 +103,31 @@ type Packages struct {
 	sums     mapx.Map[string, ModuleSum]
 }
 
+// Package locates package by path
 func (u *Packages) Package(path string) Package {
 	p, _ := u.packages.Load(path)
 	return p
 }
 
+// ModuleSum returns module sum by module path
 func (u *Packages) ModuleSum(module string) ModuleSum {
 	s, _ := u.sums.Load(module)
 	return s
+}
+
+// Packages returns iteration for all loaded package, include package from std and general importing
+func (u *Packages) Packages() iter.Seq2[string, Package] {
+	return u.packages.Range
+}
+
+// Directs returns iteration for packages under entries
+func (u *Packages) Directs() iter.Seq[string] {
+	return u.directs.Range
+}
+
+// Modules returns iteration for modules under entries
+func (u *Packages) Modules() iter.Seq[string] {
+	return u.modules.Range
 }
 
 type Package interface {
@@ -115,6 +135,7 @@ type Package interface {
 	GoPackage() *GoPackage
 	GoModule() *GoModule
 	PackageByPath(string) Package
+	Docs() iter.Seq[*Doc]
 
 	SourceDir() string
 	Eval(ast.Expr) (types.TypeAndValue, error)
@@ -140,6 +161,9 @@ func newx(p *gopkg.Package) Package {
 	methods := make(map[types.Type][]*Function)
 
 	for _, file := range p.Syntax {
+		if file.Doc != nil {
+			x.docs = append(x.docs, internal.ParseDocument(file.Doc))
+		}
 		ast.Inspect(file, func(node ast.Node) bool {
 			switch d := node.(type) {
 			case *ast.GenDecl:
@@ -149,7 +173,7 @@ func newx(p *gopkg.Package) Package {
 				for _, spec := range d.Specs {
 					switch s := spec.(type) {
 					case *ast.ValueSpec:
-						doc := internal.ParseDocument(d.Doc, s.Doc).WithDesc(s.Comment)
+						doc := internal.ParseDocument(d.Doc, s.Doc, s.Comment)
 						for _, ident := range s.Names {
 							x.constants.Add(&Constant{
 								Object: internal.NewObject(
@@ -166,7 +190,7 @@ func newx(p *gopkg.Package) Package {
 								s,
 								s.Name,
 								p.TypesInfo.Defs[s.Name].(*types.TypeName),
-								internal.ParseDocument(d.Doc, s.Doc).WithDesc(s.Comment),
+								internal.ParseDocument(d.Doc, s.Doc, s.Comment),
 							),
 						))
 					}
@@ -194,6 +218,9 @@ func newx(p *gopkg.Package) Package {
 	for t := range x.typenames.Elements() {
 		t.AddMethods(methods[t.Type()]...)
 	}
+	sort.Slice(x.docs, func(i, j int) bool {
+		return x.docs[i].Pos() < x.docs[j].Pos()
+	})
 
 	// TODO inspecting signatures should contains FuncDecl, FuncLit and CallExpr
 	// TODO should analyze signatures returned results
@@ -201,9 +228,10 @@ func newx(p *gopkg.Package) Package {
 }
 
 type xpkg struct {
-	p   *gopkg.Package
-	u   *Packages
-	dir *string
+	p    *gopkg.Package
+	u    *Packages
+	dir  *string
+	docs []*Doc
 
 	// fileset *token.FileSet
 	imports mapx.Map[string, Package]
@@ -225,6 +253,10 @@ func (x *xpkg) GoPackage() *gopkg.Package {
 
 func (x *xpkg) GoModule() *gopkg.Module {
 	return x.p.Module
+}
+
+func (x *xpkg) Docs() iter.Seq[*Doc] {
+	return slices.Values(x.docs)
 }
 
 func (x *xpkg) PackageByPath(path string) Package {

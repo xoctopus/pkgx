@@ -7,8 +7,8 @@ import (
 	"go/types"
 	"testing"
 
-	. "github.com/onsi/gomega"
 	"github.com/xoctopus/x/misc/must"
+	. "github.com/xoctopus/x/testx"
 
 	. "github.com/xoctopus/pkgx/internal"
 )
@@ -41,32 +41,32 @@ func ExampleSourceOfNode() {
 	}
 
 	// Output:
-	// IntConstType int	// this is an inline comment
-	// pos: ../testdata/documents.go:16:6
-	// end: ../testdata/documents.go:16:22
+	//IntConstType int	// this is an inline comment
+	//pos: ../testdata/documents.go:18:6
+	//end: ../testdata/documents.go:18:22
 	//
-	// // IntConstTypeValue1 doc
-	// IntConstTypeValue1 IntConstType = iota + 1	// comment 1
-	// pos: ../testdata/documents.go:20:2
-	// end: ../testdata/documents.go:20:44
+	//// IntConstTypeValue1 doc
+	//IntConstTypeValue1 IntConstType = iota + 1	// comment 1
+	//pos: ../testdata/documents.go:22:2
+	//end: ../testdata/documents.go:22:44
 	//
-	// // TypeA doc
-	// // line1
-	// // line2
-	// // +tag1=val1_1
-	// // +tag1=val1_2
-	// TypeA int
-	// pos: ../testdata/documents.go:34:2
-	// end: ../testdata/documents.go:34:11
+	//// TypeA doc
+	//// line1
+	//// line2
+	//// +tag1=val1_1
+	//// +tag1=val1_2
+	//TypeA int
+	//pos: ../testdata/documents.go:36:2
+	//end: ../testdata/documents.go:36:11
 	//
-	// // TypeB doc
-	// // line1
-	// // line2
-	// // +tag1=val1_1
-	// // +tag1=val1_2
-	// TypeB string
-	// pos: ../testdata/documents.go:40:2
-	// end: ../testdata/documents.go:40:14
+	//// TypeB doc
+	//// line1
+	//// line2
+	//// +tag1=val1_1
+	//// +tag1=val1_2
+	//TypeB string
+	//pos: ../testdata/documents.go:42:2
+	//end: ../testdata/documents.go:42:14
 }
 
 func TestDeref(t *testing.T) {
@@ -87,7 +87,7 @@ func TestDeref(t *testing.T) {
 		})
 	}
 
-	NewWithT(t).Expect(typ).NotTo(BeNil())
+	Expect(t, typ, NotBeNil[types.Type]())
 	ptr := types.NewPointer(typ)
-	NewWithT(t).Expect(types.Identical(typ, Deref(ptr))).To(BeTrue())
+	Expect(t, types.Identical(typ, Deref(ptr)), BeTrue())
 }

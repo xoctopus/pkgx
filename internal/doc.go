@@ -3,20 +3,47 @@ package internal
 import (
 	"fmt"
 	"go/ast"
+	"go/token"
+	"math"
 	"sort"
 	"strings"
 
+	"github.com/xoctopus/x/slicex"
 	"golang.org/x/exp/maps"
 )
 
-func ParseDocument(docs ...*ast.CommentGroup) *Doc {
+func ParseDocument(doc *ast.CommentGroup, comments ...*ast.CommentGroup) *Doc {
+	docs := make([]*ast.Comment, 0)
+	pos := token.Pos(math.MaxInt)
+	end := token.NoPos
+	for _, d := range append(comments, doc) {
+		if d != nil {
+			for _, c := range d.List {
+				if c != nil {
+					docs = append(docs, c)
+					if c.Pos() < pos {
+						pos = c.Pos()
+					}
+					if c.End() > end {
+						end = c.End()
+					}
+				}
+			}
+		}
+	}
+	docs = slicex.Unique(docs)
+	sort.Slice(docs, func(i, j int) bool {
+		return docs[i].Pos() < docs[j].Pos()
+	})
+
 	text := make([]string, 0, len(docs))
 	for _, c := range docs {
-		if c == nil {
-			continue
-		}
-		for _, line := range strings.Split(c.Text(), "\n") {
-			if line = strings.TrimSpace(line); len(line) > 0 {
+		for _, line := range strings.Split(c.Text, "\n") {
+			line = strings.TrimPrefix(line, "/*")
+			line = strings.TrimPrefix(line, "//")
+			line = strings.TrimSuffix(line, "*/")
+			line = strings.TrimSpace(line)
+			if len(line) > 0 {
 				text = append(text, line)
 			}
 		}
@@ -60,25 +87,27 @@ type Doc struct {
 	tags map[string][]string
 	keys []string
 	desc []string
+	pos  token.Pos
 }
 
-func (d *Doc) Tags() []string { return d.keys }
+func (d *Doc) Tags() map[string][]string {
+	return d.tags
+}
 
-func (d *Doc) Values(tag string) []string { return d.tags[tag] }
+func (d *Doc) TagKeys() []string {
+	return d.keys
+}
 
-func (d *Doc) Desc() string { return strings.Join(d.desc, " ") }
+func (d *Doc) TagValues(tag string) []string {
+	return d.tags[tag]
+}
 
-func (d *Doc) WithDesc(comments ...*ast.CommentGroup) *Doc {
-	for _, c := range comments {
-		if c != nil {
-			for _, line := range strings.Split(c.Text(), "\n") {
-				if text := strings.TrimSpace(line); len(text) > 0 {
-					d.desc = append(d.desc, text)
-				}
-			}
-		}
-	}
-	return d
+func (d *Doc) Desc() []string {
+	return d.desc
+}
+
+func (d *Doc) Pos() token.Pos {
+	return d.pos
 }
 
 func (d *Doc) String() string {
