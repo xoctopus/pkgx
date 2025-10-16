@@ -10,7 +10,6 @@ import (
 	"maps"
 	"path/filepath"
 	"slices"
-	"sort"
 
 	"github.com/xoctopus/x/mapx"
 	"github.com/xoctopus/x/misc/must"
@@ -89,14 +88,6 @@ func NewPackages(patterns ...string) *Packages {
 
 	for _, p := range u.Packages() {
 		x := p.(*xpkg)
-		sort.Slice(x.docs, func(i, j int) bool {
-			pi, pj := x.u.fileset.Position(x.docs[i].Pos()), x.u.fileset.Position(x.docs[j].Pos())
-			if pi.Filename == pj.Filename {
-				return pi.Offset < pj.Offset
-			}
-			return pi.Filename < pj.Filename
-		})
-
 		x.typenames.(internal.ObjectsManager[*types.TypeName, *TypeName]).Init(u.fileset)
 		x.functions.(internal.ObjectsManager[*types.Func, *Function]).Init(u.fileset)
 		x.constants.(internal.ObjectsManager[*types.Const, *Constant]).Init(u.fileset)
@@ -150,8 +141,8 @@ type Package interface {
 	GoModule() *GoModule
 	// PackageByPath locates package of given path
 	PackageByPath(string) Package
-	// Docs returns package level documents
-	Docs() iter.Seq[*Doc]
+	// Doc returns package level documents
+	Doc() *Doc
 	// SourceDir returns dir path of current package
 	SourceDir() string
 	Eval(ast.Expr) (types.TypeAndValue, error)
@@ -175,10 +166,11 @@ func newx(p *gopkg.Package) Package {
 		functions: internal.NewObjects[*types.Func, *Function](),
 	}
 	methods := make(map[types.Type][]*Function)
+	docs := make([]*ast.CommentGroup, len(p.Syntax))
 
 	for _, file := range p.Syntax {
 		if file.Doc != nil {
-			x.docs = append(x.docs, internal.ParseDocument(file.Doc))
+			docs = append(docs, file.Doc)
 		}
 		ast.Inspect(file, func(node ast.Node) bool {
 			switch d := node.(type) {
@@ -229,6 +221,10 @@ func newx(p *gopkg.Package) Package {
 		})
 	}
 
+	if len(docs) > 0 {
+		x.doc = internal.ParseDocument(docs[0], docs[1:]...)
+	}
+
 	for _, t := range x.typenames.(internal.ObjectsManager[*types.TypeName, *TypeName]).Iter() {
 		t.AddMethods(methods[t.Type()]...)
 	}
@@ -239,10 +235,10 @@ func newx(p *gopkg.Package) Package {
 }
 
 type xpkg struct {
-	p    *gopkg.Package
-	u    *Packages
-	dir  *string
-	docs []*Doc
+	p   *gopkg.Package
+	u   *Packages
+	dir *string
+	doc *Doc
 
 	// fileset *token.FileSet
 	imports mapx.Map[string, Package]
@@ -266,8 +262,8 @@ func (x *xpkg) GoModule() *gopkg.Module {
 	return x.p.Module
 }
 
-func (x *xpkg) Docs() iter.Seq[*Doc] {
-	return slices.Values(x.docs)
+func (x *xpkg) Doc() *Doc {
+	return x.doc
 }
 
 func (x *xpkg) PackageByPath(path string) Package {

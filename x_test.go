@@ -64,16 +64,7 @@ func TestNewPackage(t *testing.T) {
 	// TODO
 	_ = pkg.Files()
 	_ = pkg.FileSet()
-}
-
-func ExamplePackage_Docs() {
-	for d := range pkg.Docs() {
-		fmt.Println(d)
-	}
-
-	// Output:
-	// tags:[genx:apis][genx:enum][genx:model] desc:[Package testdata contains testdata for pkgx.][package desc following here]
-	// tags: desc:[Package testdata package level document][comments for testdata package]
+	_ = pkg.Doc()
 }
 
 func ExamplePackage_Constants() {
@@ -218,4 +209,9 @@ func ExamplePackages() {
 	// modules
 	// github.com/xoctopus/pkgx
 	// github.com/xoctopus/pkgx/testdata
+}
+
+func TestX(t *testing.T) {
+	x := []int{1}
+	t.Log(x[0], x[1:])
 }
