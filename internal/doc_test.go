@@ -10,23 +10,27 @@ import (
 	"github.com/xoctopus/pkgx/internal"
 )
 
-func TestParseDocument(t *testing.T) {
-	t.Run("ParseDocumentForIntConstType", func(t *testing.T) {
-		var doc *internal.Doc
-		for _, f := range testdata.Syntax {
-			ast.Inspect(f, func(node ast.Node) bool {
-				if decl, ok := node.(*ast.GenDecl); ok {
-					for _, spec := range decl.Specs {
-						if spec, ok := spec.(*ast.TypeSpec); ok && spec.Name.Name == "IntConstType" {
-							doc = internal.ParseDocument(decl.Doc, spec.Doc, spec.Comment)
-							return false
-						}
+// doc is document of `IntConstType`
+var doc *internal.Doc
+
+func init() {
+	for _, f := range pkg.GoPackage().Syntax {
+		ast.Inspect(f, func(node ast.Node) bool {
+			if decl, ok := node.(*ast.GenDecl); ok {
+				for _, spec := range decl.Specs {
+					if spec, ok := spec.(*ast.TypeSpec); ok && spec.Name.Name == "IntConstType" {
+						doc = internal.ParseDocument(decl.Doc, spec.Doc, spec.Comment)
+						return false
 					}
 				}
-				return true
-			})
-		}
+			}
+			return true
+		})
+	}
+}
 
+func TestParseDocument(t *testing.T) {
+	t.Run("ParseDocumentForIntConstType", func(t *testing.T) {
 		Expect(t, doc, NotBeNil[*internal.Doc]())
 		Expect(t, doc.TagKeys(), Equal([]string{"key1", "key2", "key3", "key4"}))
 		Expect(t, doc.Desc(), Equal([]string{
@@ -67,7 +71,6 @@ func TestParseDocument(t *testing.T) {
 	})
 
 	t.Run("NoDocument", func(t *testing.T) {
-		doc := internal.ParseDocument(nil)
-		Expect(t, doc.String(), Equal("tags: desc:"))
+		Expect(t, internal.ParseDocument(nil).String(), Equal("tags: desc:"))
 	})
 }

@@ -75,10 +75,6 @@ func NewPackages(patterns ...string) *Packages {
 		}
 	}
 
-	sort.Slice(packages, func(i, j int) bool {
-		return packages[i].PkgPath < packages[j].PkgPath
-	})
-
 	for _, p := range packages {
 		must.BeTrueF(len(p.Errors) == 0, "loaded package `%s` error", p.PkgPath)
 		if p.Module != nil {
@@ -89,6 +85,21 @@ func NewPackages(patterns ...string) *Packages {
 
 	for _, p := range packages {
 		register(p)
+	}
+
+	for _, p := range u.Packages() {
+		x := p.(*xpkg)
+		sort.Slice(x.docs, func(i, j int) bool {
+			pi, pj := x.u.fileset.Position(x.docs[i].Pos()), x.u.fileset.Position(x.docs[j].Pos())
+			if pi.Filename == pj.Filename {
+				return pi.Offset < pj.Offset
+			}
+			return pi.Filename < pj.Filename
+		})
+
+		x.typenames.(internal.ObjectsManager[*types.TypeName, *TypeName]).Init(u.fileset)
+		x.functions.(internal.ObjectsManager[*types.Func, *Function]).Init(u.fileset)
+		x.constants.(internal.ObjectsManager[*types.Const, *Constant]).Init(u.fileset)
 	}
 
 	return u
@@ -131,12 +142,17 @@ func (u *Packages) Modules() iter.Seq[string] {
 }
 
 type Package interface {
+	// Unwrap returns types.Package of this package
 	Unwrap() *TPackage
+	// GoPackage returns packages.Package of this package
 	GoPackage() *GoPackage
+	// GoModule returns packages.Module of this package
 	GoModule() *GoModule
+	// PackageByPath locates package of given path
 	PackageByPath(string) Package
+	// Docs returns package level documents
 	Docs() iter.Seq[*Doc]
-
+	// SourceDir returns dir path of current package
 	SourceDir() string
 	Eval(ast.Expr) (types.TypeAndValue, error)
 	Files() []*ast.File
@@ -175,24 +191,26 @@ func newx(p *gopkg.Package) Package {
 					case *ast.ValueSpec:
 						doc := internal.ParseDocument(d.Doc, s.Doc, s.Comment)
 						for _, ident := range s.Names {
-							x.constants.Add(&Constant{
-								Object: internal.NewObject(
-									s,
-									ident,
-									p.TypesInfo.Defs[ident].(*types.Const),
-									doc,
-								),
-							})
+							x.constants.(internal.ObjectsManager[*types.Const, *Constant]).
+								Add(&Constant{
+									Object: internal.NewObject(
+										s,
+										ident,
+										p.TypesInfo.Defs[ident].(*types.Const),
+										doc,
+									),
+								})
 						}
 					case *ast.TypeSpec:
-						x.typenames.Add(internal.NewTypeName(
-							internal.NewObject(
-								s,
-								s.Name,
-								p.TypesInfo.Defs[s.Name].(*types.TypeName),
-								internal.ParseDocument(d.Doc, s.Doc, s.Comment),
-							),
-						))
+						x.typenames.(internal.ObjectsManager[*types.TypeName, *TypeName]).
+							Add(internal.NewTypeName(
+								internal.NewObject(
+									s,
+									s.Name,
+									p.TypesInfo.Defs[s.Name].(*types.TypeName),
+									internal.ParseDocument(d.Doc, s.Doc, s.Comment),
+								),
+							))
 					}
 				}
 			case *ast.FuncDecl:
@@ -201,7 +219,7 @@ func newx(p *gopkg.Package) Package {
 				o := internal.NewObject(node, d.Name, u, doc)
 				f := &internal.Function{Object: o}
 				if recv := u.Signature().Recv(); recv == nil {
-					x.functions.Add(f)
+					x.functions.(internal.ObjectsManager[*types.Func, *Function]).Add(f)
 				} else {
 					t := types.Unalias(internal.Deref(recv.Type()))
 					methods[t] = append(methods[t], f)
@@ -211,16 +229,9 @@ func newx(p *gopkg.Package) Package {
 		})
 	}
 
-	x.functions.Init()
-	x.constants.Init()
-	x.typenames.Init()
-
-	for t := range x.typenames.Elements() {
+	for _, t := range x.typenames.(internal.ObjectsManager[*types.TypeName, *TypeName]).Iter() {
 		t.AddMethods(methods[t.Type()]...)
 	}
-	sort.Slice(x.docs, func(i, j int) bool {
-		return x.docs[i].Pos() < x.docs[j].Pos()
-	})
 
 	// TODO inspecting signatures should contains FuncDecl, FuncLit and CallExpr
 	// TODO should analyze signatures returned results

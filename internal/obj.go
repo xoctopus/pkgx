@@ -2,8 +2,10 @@ package internal
 
 import (
 	"go/ast"
+	"go/token"
 	"go/types"
 	"iter"
+	"sort"
 
 	"github.com/xoctopus/x/mapx"
 )
@@ -67,14 +69,7 @@ func (o *object[U]) Type() types.Type {
 	if o.u == *new(U) {
 		return nil
 	}
-
-	switch x := any(o.u).(type) {
-	// TODO if treat types.Signature as an Underlying
-	// case types.Type:
-	// 	return x
-	default:
-		return x.(types.Object).Type()
-	}
+	return any(o.u).(types.Object).Type()
 }
 
 func (o *object[U]) TypeName() string {
@@ -89,20 +84,22 @@ func (o *object[U]) TypeName() string {
 	return ""
 }
 
-// TODO type Signature struct{ Object[*types.Signature] }
-
 // Objects defines an interface for lookup and traverse Object by ast.Node or
 // object name
 type Objects[U Exposer, V Object[U]] interface {
-	Init()
 	Len() int
 	Nodes() iter.Seq[ast.Node]
-	Add(...V)
 	ExposerOf(ast.Node) U
 	Exposers() iter.Seq[U]
 	ElementOf(ast.Node) V
 	Elements() iter.Seq[V]
 	ElementByName(string) V
+}
+
+type ObjectsManager[U Exposer, V Object[U]] interface {
+	Add(...V)
+	Init(*token.FileSet)
+	Iter() iter.Seq2[Node, V]
 }
 
 func NewObjects[U Exposer, V Object[U]]() Objects[U, V] {
@@ -115,7 +112,7 @@ type objects[U Exposer, V Object[U]] struct {
 	vals  []V
 }
 
-func (s *objects[U, V]) Init() {
+func (s *objects[U, V]) Init(fileset *token.FileSet) {
 	size := mapx.Len(s.set)
 	s.nodes = make([]ast.Node, size)
 	s.vals = make([]V, size)
@@ -124,7 +121,14 @@ func (s *objects[U, V]) Init() {
 	for _, node := range mapx.Keys(s.set) {
 		nodes = append(nodes, node)
 	}
-	nodes.Sort()
+
+	sort.Slice(nodes, func(i, j int) bool {
+		pi, pj := fileset.Position(nodes[i].Pos()), fileset.Position(nodes[j].Pos())
+		if pi.Filename == pj.Filename {
+			return pi.Offset < pj.Offset
+		}
+		return pi.Filename < pj.Filename
+	})
 
 	for i, node := range nodes {
 		e, _ := s.set.Load(NodeOf(node))
@@ -197,4 +201,8 @@ func (s *objects[U, V]) ElementByName(name string) (e V) {
 		return true
 	})
 	return
+}
+
+func (s *objects[U, V]) Iter() iter.Seq2[Node, V] {
+	return s.set.Range
 }

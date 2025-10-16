@@ -69,7 +69,8 @@ func TestObject(t *testing.T) {
 		}
 	}
 
-	functions.Add(&Function{Object: NewObject(nil, nil, &types.Func{}, nil)})
+	functions.(ObjectsManager[*types.Func, *Function]).
+		Add(&Function{Object: NewObject(nil, nil, &types.Func{}, nil)})
 	Expect(t, functions.Len(), Equal(2))
 
 	fu := functions.ExposerOf(node)

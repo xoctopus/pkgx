@@ -3,8 +3,6 @@ package internal
 import (
 	"fmt"
 	"go/ast"
-	"go/token"
-	"math"
 	"sort"
 	"strings"
 
@@ -14,27 +12,28 @@ import (
 
 func ParseDocument(doc *ast.CommentGroup, comments ...*ast.CommentGroup) *Doc {
 	docs := make([]*ast.Comment, 0)
-	pos := token.Pos(math.MaxInt)
-	end := token.NoPos
 	for _, d := range append(comments, doc) {
 		if d != nil {
 			for _, c := range d.List {
 				if c != nil {
 					docs = append(docs, c)
-					if c.Pos() < pos {
-						pos = c.Pos()
-					}
-					if c.End() > end {
-						end = c.End()
-					}
 				}
 			}
 		}
 	}
+	if len(docs) == 0 {
+		return EmptyDocument
+	}
+
 	docs = slicex.Unique(docs)
 	sort.Slice(docs, func(i, j int) bool {
 		return docs[i].Pos() < docs[j].Pos()
 	})
+
+	d := &Doc{
+		tags:         make(map[string][]string),
+		CommentGroup: &ast.CommentGroup{List: docs},
+	}
 
 	text := make([]string, 0, len(docs))
 	for _, c := range docs {
@@ -49,7 +48,6 @@ func ParseDocument(doc *ast.CommentGroup, comments ...*ast.CommentGroup) *Doc {
 		}
 	}
 
-	d := &Doc{tags: make(map[string][]string)}
 	for _, line := range text {
 		if line[0] != '+' {
 			d.desc = append(d.desc, line)
@@ -66,7 +64,7 @@ func ParseDocument(doc *ast.CommentGroup, comments ...*ast.CommentGroup) *Doc {
 		d.tags[k] = append(d.tags[k], v)
 	}
 	if len(d.desc) == 0 && len(d.tags) == 0 {
-		return d
+		return EmptyDocument
 	}
 	for tag, vals := range d.tags {
 		trimmed := make([]string, 0, len(vals))
@@ -87,7 +85,11 @@ type Doc struct {
 	tags map[string][]string
 	keys []string
 	desc []string
-	pos  token.Pos
+	*ast.CommentGroup
+}
+
+var EmptyDocument = &Doc{
+	tags: make(map[string][]string),
 }
 
 func (d *Doc) Tags() map[string][]string {
@@ -104,10 +106,6 @@ func (d *Doc) TagValues(tag string) []string {
 
 func (d *Doc) Desc() []string {
 	return d.desc
-}
-
-func (d *Doc) Pos() token.Pos {
-	return d.pos
 }
 
 func (d *Doc) String() string {
