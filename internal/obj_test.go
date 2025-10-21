@@ -1,6 +1,7 @@
 package internal_test
 
 import (
+	"context"
 	"go/ast"
 	"go/types"
 	"testing"
@@ -12,9 +13,11 @@ import (
 )
 
 var (
-	// sub      = "github.com/xoctopus/pkgx/testdata/sub"
-	// cwd, _   = os.Getwd()
-	u   = pkgx.NewPackages("github.com/xoctopus/pkgx", "github.com/xoctopus/pkgx/testdata")
+	u = pkgx.NewPackages(
+		context.Background(),
+		"github.com/xoctopus/pkgx",
+		"github.com/xoctopus/pkgx/testdata",
+	)
 	pkg = u.Package("github.com/xoctopus/pkgx/testdata")
 )
 

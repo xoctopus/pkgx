@@ -1,6 +1,7 @@
 package pkgx_test
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -20,7 +21,7 @@ var (
 	sub      = "github.com/xoctopus/pkgx/testdata/sub"
 	cwd, _   = os.Getwd()
 
-	u   = NewPackages(module, testdata)
+	u   = NewPackages(context.Background(), module, testdata)
 	pkg = u.Package(testdata)
 )
 
@@ -196,6 +197,7 @@ func ExamplePackages() {
 	// github.com/xoctopus/pkgx/internal
 	// github.com/xoctopus/pkgx/testdata
 	// github.com/xoctopus/pkgx/testdata/sub
+	// github.com/xoctopus/x/contextx
 	// github.com/xoctopus/x/misc/must
 	// github.com/xoctopus/x/ptrx
 	// github.com/xoctopus/x/slicex
@@ -208,4 +210,15 @@ func ExamplePackages() {
 	// modules
 	// github.com/xoctopus/pkgx
 	// github.com/xoctopus/pkgx/testdata
+}
+
+func TestWithWorkdir(t *testing.T) {
+	dir := filepath.Join(cwd, "..", "x", "reflectx")
+	ctx := WithWorkdir(context.Background(), dir)
+
+	x := NewPackages(ctx, "github.com/xoctopus/x/reflectx")
+	p := x.Package("github.com/xoctopus/x/reflectx")
+
+	Expect(t, p.SourceDir(), Equal(dir))
+	Expect(t, WithWorkdir(ctx, "any"), Equal(ctx))
 }

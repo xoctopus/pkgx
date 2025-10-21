@@ -2,6 +2,7 @@ package pkgx
 
 import (
 	"bytes"
+	"context"
 	"go/ast"
 	"go/format"
 	"go/token"
@@ -34,7 +35,7 @@ type (
 	GoModule  = gopkg.Module
 )
 
-func NewPackages(patterns ...string) *Packages {
+func NewPackages(ctx context.Context, patterns ...string) *Packages {
 	u := &Packages{
 		entries:  patterns,
 		fileset:  token.NewFileSet(),
@@ -44,9 +45,12 @@ func NewPackages(patterns ...string) *Packages {
 		sums:     syncx.NewSmap[string, ModuleSum](),
 	}
 
+	workdir, _ := ctxWorkdir.From(ctx)
+
 	packages, err := gopkg.Load(&gopkg.Config{
 		Fset: u.fileset,
 		Mode: gopkg.LoadMode(0b11111111111111111),
+		Dir:  workdir,
 	}, patterns...)
 	must.NoErrorF(err, "failed to load packages: %v", patterns)
 
