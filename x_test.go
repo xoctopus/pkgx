@@ -8,7 +8,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/xoctopus/x/mapx"
 	. "github.com/xoctopus/x/testx"
 
 	. "github.com/xoctopus/pkgx"
@@ -98,7 +97,7 @@ func ExamplePackage_TypeNames() {
 	for o := range pkg.TypeNames().Elements() {
 		fmt.Println(o.Doc())
 		fmt.Println(o.Ident().Name)
-		methods := mapx.Keys(o.Methods())
+		methods := o.Methods().Keys()
 		sort.Strings(methods)
 		for _, name := range methods {
 			m := o.Method(name)
@@ -161,7 +160,7 @@ func ExamplePackage_Functions() {
 func ExamplePackages() {
 	paths := make([]string, 0)
 	fmt.Println("imported in company:")
-	for path, _ := range u.Packages() {
+	for path := range u.Packages {
 		if strings.HasPrefix(path, "github.com/xoctopus") {
 			paths = append(paths, path)
 		}
@@ -173,7 +172,7 @@ func ExamplePackages() {
 
 	fmt.Println("directs")
 	paths = paths[:0]
-	for path := range u.Directs() {
+	for path := range u.Directs {
 		paths = append(paths, path)
 	}
 	sort.Strings(paths)
@@ -183,7 +182,7 @@ func ExamplePackages() {
 
 	fmt.Println("modules")
 	paths = paths[:0]
-	for path := range u.Modules() {
+	for path := range u.Modules {
 		paths = append(paths, path)
 	}
 	sort.Strings(paths)
@@ -197,10 +196,10 @@ func ExamplePackages() {
 	// github.com/xoctopus/pkgx/internal
 	// github.com/xoctopus/pkgx/testdata
 	// github.com/xoctopus/pkgx/testdata/sub
-	// github.com/xoctopus/x/mapx
 	// github.com/xoctopus/x/misc/must
 	// github.com/xoctopus/x/ptrx
 	// github.com/xoctopus/x/slicex
+	// github.com/xoctopus/x/syncx
 	// directs
 	// github.com/xoctopus/pkgx
 	// github.com/xoctopus/pkgx/internal
@@ -209,9 +208,4 @@ func ExamplePackages() {
 	// modules
 	// github.com/xoctopus/pkgx
 	// github.com/xoctopus/pkgx/testdata
-}
-
-func TestX(t *testing.T) {
-	x := []int{1}
-	t.Log(x[0], x[1:])
 }

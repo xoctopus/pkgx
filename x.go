@@ -6,14 +6,13 @@ import (
 	"go/format"
 	"go/token"
 	"go/types"
-	"iter"
 	"maps"
 	"path/filepath"
 	"slices"
 
-	"github.com/xoctopus/x/mapx"
 	"github.com/xoctopus/x/misc/must"
 	"github.com/xoctopus/x/ptrx"
+	"github.com/xoctopus/x/syncx"
 	gopkg "golang.org/x/tools/go/packages"
 
 	"github.com/xoctopus/pkgx/internal"
@@ -39,10 +38,10 @@ func NewPackages(patterns ...string) *Packages {
 	u := &Packages{
 		entries:  patterns,
 		fileset:  token.NewFileSet(),
-		packages: mapx.NewSafeXmap[string, Package](),
-		modules:  mapx.NewSafeSet[string](),
-		directs:  mapx.NewSafeSet[string](),
-		sums:     mapx.NewSafeXmap[string, ModuleSum](),
+		packages: syncx.NewSmap[string, Package](),
+		modules:  syncx.NewSet[string](),
+		directs:  syncx.NewSet[string](),
+		sums:     syncx.NewSmap[string, ModuleSum](),
 	}
 
 	packages, err := gopkg.Load(&gopkg.Config{
@@ -86,7 +85,7 @@ func NewPackages(patterns ...string) *Packages {
 		register(p)
 	}
 
-	for _, p := range u.Packages() {
+	for _, p := range u.Packages {
 		x := p.(*xpkg)
 		x.typenames.(internal.ObjectsManager[*types.TypeName, *TypeName]).Init(u.fileset)
 		x.functions.(internal.ObjectsManager[*types.Func, *Function]).Init(u.fileset)
@@ -99,10 +98,10 @@ func NewPackages(patterns ...string) *Packages {
 type Packages struct {
 	entries  []string
 	fileset  *token.FileSet
-	packages mapx.Map[string, Package]
-	modules  mapx.Set[string]
-	directs  mapx.Set[string]
-	sums     mapx.Map[string, ModuleSum]
+	packages syncx.Map[string, Package]
+	modules  syncx.Set[string]
+	directs  syncx.Set[string]
+	sums     syncx.Map[string, ModuleSum]
 }
 
 // Package locates package by path
@@ -118,18 +117,18 @@ func (u *Packages) ModuleSum(module string) ModuleSum {
 }
 
 // Packages returns iteration for all loaded package, include package from std and general importing
-func (u *Packages) Packages() iter.Seq2[string, Package] {
-	return u.packages.Range
+func (u *Packages) Packages(f func(string, Package) bool) {
+	u.packages.Range(f)
 }
 
 // Directs returns iteration for packages under entries
-func (u *Packages) Directs() iter.Seq[string] {
-	return u.directs.Range
+func (u *Packages) Directs(f func(string) bool) {
+	u.directs.Range(f)
 }
 
 // Modules returns iteration for modules under entries
-func (u *Packages) Modules() iter.Seq[string] {
-	return u.modules.Range
+func (u *Packages) Modules(f func(string) bool) {
+	u.modules.Range(f)
 }
 
 type Package interface {
@@ -160,7 +159,7 @@ func newx(p *gopkg.Package) Package {
 	must.BeTrue(p != nil && len(p.Errors) == 0)
 	x := &xpkg{
 		p:         p,
-		imports:   mapx.NewXmap[string, Package](),
+		imports:   syncx.NewXmap[string, Package](),
 		typenames: internal.NewObjects[*types.TypeName, *TypeName](),
 		constants: internal.NewObjects[*types.Const, *Constant](),
 		functions: internal.NewObjects[*types.Func, *Function](),
@@ -225,7 +224,8 @@ func newx(p *gopkg.Package) Package {
 		x.doc = internal.ParseDocument(docs[0], docs[1:]...)
 	}
 
-	for _, t := range x.typenames.(internal.ObjectsManager[*types.TypeName, *TypeName]).Iter() {
+	typenames := x.typenames.(internal.ObjectsManager[*types.TypeName, *TypeName])
+	for _, t := range typenames.RangeNodes {
 		t.AddMethods(methods[t.Type()]...)
 	}
 
@@ -241,7 +241,7 @@ type xpkg struct {
 	doc *Doc
 
 	// fileset *token.FileSet
-	imports mapx.Map[string, Package]
+	imports syncx.Map[string, Package]
 
 	typenames TypeNames
 	constants Constants

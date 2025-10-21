@@ -7,7 +7,7 @@ import (
 	"iter"
 	"sort"
 
-	"github.com/xoctopus/x/mapx"
+	"github.com/xoctopus/x/syncx"
 )
 
 // Exposer presents package level exposer excludes *types.Var
@@ -99,26 +99,22 @@ type Objects[U Exposer, V Object[U]] interface {
 type ObjectsManager[U Exposer, V Object[U]] interface {
 	Add(...V)
 	Init(*token.FileSet)
-	Iter() iter.Seq2[Node, V]
+	RangeNodes(func(Node, V) bool)
 }
 
 func NewObjects[U Exposer, V Object[U]]() Objects[U, V] {
-	return &objects[U, V]{set: mapx.NewXmap[Node, V]()}
+	return &objects[U, V]{set: syncx.NewXmap[Node, V]()}
 }
 
 type objects[U Exposer, V Object[U]] struct {
-	set   mapx.Map[Node, V]
+	set   syncx.Map[Node, V]
 	nodes []ast.Node
 	vals  []V
 }
 
 func (s *objects[U, V]) Init(fileset *token.FileSet) {
-	size := mapx.Len(s.set)
-	s.nodes = make([]ast.Node, size)
-	s.vals = make([]V, size)
-
-	nodes := make(Nodes[ast.Node], 0, size)
-	for _, node := range mapx.Keys(s.set) {
+	nodes := make(Nodes[ast.Node], 0)
+	for node := range s.set.Range {
 		nodes = append(nodes, node)
 	}
 
@@ -130,15 +126,15 @@ func (s *objects[U, V]) Init(fileset *token.FileSet) {
 		return pi.Filename < pj.Filename
 	})
 
-	for i, node := range nodes {
+	for _, node := range nodes {
 		e, _ := s.set.Load(NodeOf(node))
-		s.nodes[i] = e.Node()
-		s.vals[i] = e
+		s.nodes = append(s.nodes, e.Node())
+		s.vals = append(s.vals, e)
 	}
 }
 
 func (s *objects[U, V]) Len() int {
-	return mapx.Len(s.set)
+	return len(s.nodes)
 }
 
 func (s *objects[U, V]) Nodes() iter.Seq[ast.Node] {
@@ -203,6 +199,6 @@ func (s *objects[U, V]) ElementByName(name string) (e V) {
 	return
 }
 
-func (s *objects[U, V]) Iter() iter.Seq2[Node, V] {
-	return s.set.Range
+func (s *objects[U, V]) RangeNodes(f func(Node, V) bool) {
+	s.set.Range(f)
 }

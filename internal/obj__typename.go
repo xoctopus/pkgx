@@ -3,22 +3,22 @@ package internal
 import (
 	"go/types"
 
-	"github.com/xoctopus/x/mapx"
+	"github.com/xoctopus/x/syncx"
 )
 
 func NewTypeName(obj Object[*types.TypeName]) *TypeName {
 	return &TypeName{
 		Object:  obj,
-		methods: mapx.NewXmap[string, *Function](),
+		methods: syncx.NewXmap[string, *Function](),
 	}
 }
 
 type TypeName struct {
 	Object[*types.TypeName]
-	methods mapx.Map[string, *Function]
+	methods syncx.Map[string, *Function]
 }
 
-func (t *TypeName) Methods() mapx.Map[string, *Function] {
+func (t *TypeName) Methods() syncx.Map[string, *Function] {
 	return t.methods
 }
 
