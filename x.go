@@ -74,7 +74,7 @@ func NewPackages(patterns ...string) *Packages {
 	}
 
 	for _, p := range packages {
-		must.BeTrueF(len(p.Errors) == 0, "loaded package `%s` error", p.PkgPath)
+		must.BeTrueF(len(p.Errors) == 0, "loaded package `%s` error: %v", p.PkgPath, p.Errors)
 		if p.Module != nil {
 			u.modules.Store(p.Module.Path)
 		}
