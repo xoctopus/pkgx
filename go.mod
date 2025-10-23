@@ -4,7 +4,7 @@ go 1.25.1
 
 require (
 	github.com/xoctopus/pkgx/testdata v0.0.0-20250331091630-3af90d68c457
-	github.com/xoctopus/x v0.1.3-0.20251021103404-c872bf18f209
+	github.com/xoctopus/x v0.1.3-0.20251023051842-45a07e57da1a
 	golang.org/x/exp v0.0.0-20251017212417-90e834f514db
 	golang.org/x/mod v0.29.0
 	golang.org/x/tools v0.38.0
