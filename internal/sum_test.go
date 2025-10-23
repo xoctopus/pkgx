@@ -63,11 +63,11 @@ func TestLoadSumFile(t *testing.T) {
 
 	t.Run("AddPackagesHashes", func(t *testing.T) {
 		sum.Add(testdata)
-		h := sum.Hash(testdata.PkgPath)
+		h := sum.Hash(testdata.ID)
 		Expect(t, h, NotEqual(""))
 
 		sum.Add(sub)
-		h = sum.Hash(sub.PkgPath)
+		h = sum.Hash(sub.ID)
 		Expect(t, h, NotEqual(""))
 	})
 
@@ -76,8 +76,8 @@ func TestLoadSumFile(t *testing.T) {
 
 		sum2 := internal.LoadSumFile(testdata.Module)
 		Expect(t, sum2, NotBeNil[internal.Sum]())
-		Expect(t, sum2.Hash(testdata.PkgPath), Equal(sum.Hash(testdata.PkgPath)))
-		Expect(t, sum2.Hash(sub.PkgPath), Equal(sum.Hash(sub.PkgPath)))
+		Expect(t, sum2.Hash(testdata.ID), Equal(sum.Hash(testdata.ID)))
+		Expect(t, sum2.Hash(sub.ID), Equal(sum.Hash(sub.ID)))
 
 		t.Run("FailedLoad", func(t *testing.T) {
 			t.Run("FailedToOpenFile", func(t *testing.T) {

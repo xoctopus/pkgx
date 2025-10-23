@@ -110,7 +110,7 @@ fmt: dep clean
 	@echo "==> format code"
 	@goimports-reviser -rm-unused \
 		-imports-order 'std,general,company,project' -project-name ${MOD} \
-		-excludes '.git/,.xgo/,*.pb.go,*_generated.go,*_genx.go' ./...
+		-excludes './testdata,.git/,.xgo/,*.pb.go,*_generated.go,*_genx.go' ./...
 
 lint: dep
 	@echo "==> static check"

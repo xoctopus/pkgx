@@ -46,10 +46,14 @@ func NewPackages(ctx context.Context, patterns ...string) *Packages {
 	}
 
 	workdir, _ := ctxWorkdir.From(ctx)
+	mode, ok := ctxLoadMode.From(ctx)
+	if !ok {
+		mode = DefaultLoadMode
+	}
 
 	packages, err := gopkg.Load(&gopkg.Config{
 		Fset: u.fileset,
-		Mode: gopkg.LoadMode(0b11111111111111111),
+		Mode: mode,
 		Dir:  workdir,
 	}, patterns...)
 	must.NoErrorF(err, "failed to load packages: %v", patterns)
@@ -65,11 +69,11 @@ func NewPackages(ctx context.Context, patterns ...string) *Packages {
 				register(p.Imports[path])
 			}
 		}
-		u.packages.Store(p.PkgPath, x)
+		u.packages.Store(p.ID, x)
 
 		if p.Module != nil {
 			if u.modules.Exists(p.Module.Path) {
-				u.directs.Store(p.PkgPath)
+				u.directs.Store(p.ID)
 				u.modules.Store(p.Module.Path)
 				s, _ := u.sums.LoadOrStore(p.Module.Path, internal.NewSum(p.Module.Dir))
 				s.Add(p)
@@ -78,7 +82,7 @@ func NewPackages(ctx context.Context, patterns ...string) *Packages {
 	}
 
 	for _, p := range packages {
-		must.BeTrueF(len(p.Errors) == 0, "loaded package `%s` error: %v", p.PkgPath, p.Errors)
+		must.BeTrueF(len(p.Errors) == 0, "loaded package `%s` error: %v", p.ID, p.Errors)
 		if p.Module != nil {
 			u.modules.Store(p.Module.Path)
 		}

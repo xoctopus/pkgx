@@ -63,9 +63,9 @@ type sum struct {
 func (s *sum) Dir() string { return s.dir }
 
 func (s *sum) Add(p *gopkg.Package) {
-	if _, ok := s.hashes[p.PkgPath]; !ok {
+	if _, ok := s.hashes[p.ID]; !ok {
 		h, _ := dirhash.HashDir(p.Dir, "", dirhash.Hash1)
-		s.hashes[p.PkgPath] = h
+		s.hashes[p.ID] = h
 	}
 }
 

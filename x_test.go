@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	. "github.com/xoctopus/x/testx"
+	gopkg "golang.org/x/tools/go/packages"
 
 	. "github.com/xoctopus/pkgx"
 	_ "github.com/xoctopus/pkgx/testdata"
@@ -28,7 +29,7 @@ var (
 func TestNewPackage(t *testing.T) {
 	Expect(t, pkg.Unwrap().Path(), Equal(testdata))
 	Expect(t, pkg.Unwrap().Name(), Equal("testdata"))
-	Expect(t, pkg.GoPackage().PkgPath, Equal(testdata))
+	Expect(t, pkg.GoPackage().ID, Equal(testdata))
 	Expect(t, pkg.GoPackage().Name, Equal("testdata"))
 
 	Expect(t, pkg.GoModule().Path, Equal(testdata))
@@ -213,12 +214,15 @@ func ExamplePackages() {
 }
 
 func TestWithWorkdir(t *testing.T) {
-	dir := filepath.Join(cwd, "..", "x", "reflectx")
-	ctx := WithWorkdir(context.Background(), dir)
+	dir := filepath.Join(cwd, "testdata", "sub")
+	ctx := context.Background()
+	ctx = WithWorkdir(ctx, dir)
+	ctx = WithLoadMode(ctx, DefaultLoadMode)
 
-	x := NewPackages(ctx, "github.com/xoctopus/x/reflectx")
-	p := x.Package("github.com/xoctopus/x/reflectx")
+	x := NewPackages(ctx, "github.com/xoctopus/pkgx/testdata/sub")
+	p := x.Package("github.com/xoctopus/pkgx/testdata/sub")
 
 	Expect(t, p.SourceDir(), Equal(dir))
 	Expect(t, WithWorkdir(ctx, "any"), Equal(ctx))
+	Expect(t, WithLoadMode(ctx, gopkg.NeedDeps), Equal(ctx))
 }
