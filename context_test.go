@@ -31,8 +31,8 @@ func TestConfig(t *testing.T) {
 	Expect(t, defv.Logf, BeNil[func(string, ...any)]())
 	Expect(t, defv.Fset, BeNil[*token.FileSet]())
 
-	Expect(t, PackageName(ctx, AsPackage(MustLoad(ctx, "io"))), Equal("io"))
-	Expect(t, PackageName(ctx, AsPackage(MustLoad(ctx, "bytes"))), Equal("bytes"))
+	Expect(t, PackageName(ctx, Load(ctx, "io")), Equal("io"))
+	Expect(t, PackageName(ctx, Load(ctx, "bytes")), Equal("bytes"))
 
 	workdir := filepath.Join(os.Getenv("GOROOT"), "src")
 
@@ -49,6 +49,6 @@ func TestConfig(t *testing.T) {
 	Expect(t, defv.Logf, NotBeNil[func(string, ...any)]())
 	Expect(t, defv.Fset, NotBeNil[*token.FileSet]())
 
-	Expect(t, PackageName(ctx, AsPackage(MustLoad(ctx, "io"))), Equal("std_io"))
-	Expect(t, PackageName(ctx, AsPackage(MustLoad(ctx, "bytes"))), Equal("bytes"))
+	Expect(t, PackageName(ctx, Load(ctx, "io")), Equal("std_io"))
+	Expect(t, PackageName(ctx, Load(ctx, "bytes")), Equal("bytes"))
 }

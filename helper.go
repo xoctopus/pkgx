@@ -16,13 +16,13 @@ import (
 )
 
 func Lookup[T types.Type](ctx context.Context, path, x string) (T, bool) {
-	fn, _ := gPkgs.LoadOrStore(path, sync.OnceValue(func() *gopkg.Package {
-		return MustLoad(ctx, path)
+	fn, _ := gPkgs.LoadOrStore(path, sync.OnceValue(func() Package {
+		return Load(ctx, path)
 	}))
 	p := fn()
 
 	if p != nil {
-		o := p.Types.Scope().Lookup(x)
+		o := p.Unwrap().Scope().Lookup(x)
 		if o != nil {
 			t, ok := o.Type().(T)
 			return t, ok
@@ -38,9 +38,9 @@ func MustLookup[T types.Type](ctx context.Context, path, name string) T {
 	panic(fmt.Errorf("expect lookup `%s.%s` as %T", path, name, reflect.TypeFor[T]()))
 }
 
-var gPkgs = syncx.NewXmap[string, func() *gopkg.Package]()
+var gPkgs = syncx.NewXmap[string, func() Package]()
 
-func MustLoad(ctx context.Context, path string) *gopkg.Package {
+func load(ctx context.Context, path string) *gopkg.Package {
 	_path := path
 	if strings.HasSuffix(path, "_test") {
 		path = strings.TrimSuffix(_path, "_test")
@@ -70,4 +70,8 @@ func MustLoad(ctx context.Context, path string) *gopkg.Package {
 
 func AsPackage(pkg *gopkg.Package) Package {
 	return newx(pkg)
+}
+
+func Load(ctx context.Context, path string) Package {
+	return AsPackage(load(ctx, path))
 }
