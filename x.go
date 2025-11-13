@@ -44,18 +44,9 @@ func NewPackages(ctx context.Context, patterns ...string) *Packages {
 		directs:  syncx.NewSet[string](),
 		sums:     syncx.NewSmap[string, ModuleSum](),
 	}
+	ctx = WithFileset(ctx, u.fileset)
 
-	workdir, _ := ctxWorkdir.From(ctx)
-	mode, ok := ctxLoadMode.From(ctx)
-	if !ok {
-		mode = DefaultLoadMode
-	}
-
-	packages, err := gopkg.Load(&gopkg.Config{
-		Fset: u.fileset,
-		Mode: mode,
-		Dir:  workdir,
-	}, patterns...)
+	packages, err := gopkg.Load(Config(ctx), patterns...)
 	must.NoErrorF(err, "failed to load packages: %v", patterns)
 
 	var register func(p *GoPackage)
@@ -140,6 +131,10 @@ func (u *Packages) Modules(f func(string) bool) {
 }
 
 type Package interface {
+	Path() string
+	ID() string
+	Name() string
+
 	// Unwrap returns types.Package of this package
 	Unwrap() *TPackage
 	// GoPackage returns packages.Package of this package
@@ -256,6 +251,18 @@ type xpkg struct {
 	functions Functions
 	// TODO signatures and results
 	// signatures internal.Objects[*types.Signature, *internal.Signature]
+}
+
+func (x *xpkg) Path() string {
+	return x.p.PkgPath
+}
+
+func (x *xpkg) ID() string {
+	return x.p.ID
+}
+
+func (x *xpkg) Name() string {
+	return x.p.Name
 }
 
 func (x *xpkg) Unwrap() *types.Package {

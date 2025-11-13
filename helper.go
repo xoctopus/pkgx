@@ -2,16 +2,27 @@ package pkgx
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"go/types"
 	"reflect"
+	"slices"
+	"strings"
+	"sync"
 
-	"github.com/pkg/errors"
+	"github.com/xoctopus/x/misc/must"
+	"github.com/xoctopus/x/syncx"
+	gopkg "golang.org/x/tools/go/packages"
 )
 
-func Lookup[T types.Type](ctx context.Context, path, name string) (T, bool) {
-	p := NewPackages(ctx).Package(path)
+func Lookup[T types.Type](ctx context.Context, path, x string) (T, bool) {
+	fn, _ := gPkgs.LoadOrStore(path, sync.OnceValue(func() *gopkg.Package {
+		return MustLoad(ctx, path)
+	}))
+	p := fn()
+
 	if p != nil {
-		o := p.Unwrap().Scope().Lookup(name)
+		o := p.Types.Scope().Lookup(x)
 		if o != nil {
 			t, ok := o.Type().(T)
 			return t, ok
@@ -24,5 +35,39 @@ func MustLookup[T types.Type](ctx context.Context, path, name string) T {
 	if t, ok := Lookup[T](ctx, path, name); ok {
 		return t
 	}
-	panic(errors.Errorf("expect lookup `%s.%s` as %T", path, name, reflect.TypeFor[T]()))
+	panic(fmt.Errorf("expect lookup `%s.%s` as %T", path, name, reflect.TypeFor[T]()))
+}
+
+var gPkgs = syncx.NewXmap[string, func() *gopkg.Package]()
+
+func MustLoad(ctx context.Context, path string) *gopkg.Package {
+	_path := path
+	if strings.HasSuffix(path, "_test") {
+		path = strings.TrimSuffix(_path, "_test")
+	}
+
+	pkgs, err := gopkg.Load(Config(ctx), path)
+	must.NoErrorF(err, "failed to load %s", path)
+	must.BeTrueF(len(pkgs) > 0, "no packages loaded")
+	must.NoErrorF(errors.Join(
+		slices.Collect(func(yield func(error) bool) {
+			for _, x := range pkgs[0].Errors {
+				yield(x)
+			}
+		})...,
+	), "failed to load %s", path)
+
+	var pkg *gopkg.Package
+	for i := range pkgs {
+		if pkgs[i].PkgPath == _path {
+			pkg = pkgs[i]
+			break
+		}
+	}
+	must.BeTrueF(pkg != nil, "package %s not loaded", _path)
+	return pkg
+}
+
+func AsPackage(pkg *gopkg.Package) Package {
+	return newx(pkg)
 }

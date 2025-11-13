@@ -3,6 +3,7 @@ package pkgx_test
 import (
 	"context"
 	"fmt"
+	"go/types"
 	"os"
 	"path/filepath"
 	"sort"
@@ -10,7 +11,6 @@ import (
 	"testing"
 
 	. "github.com/xoctopus/x/testx"
-	gopkg "golang.org/x/tools/go/packages"
 
 	. "github.com/xoctopus/pkgx"
 	_ "github.com/xoctopus/pkgx/testdata"
@@ -214,15 +214,32 @@ func ExamplePackages() {
 }
 
 func TestWithWorkdir(t *testing.T) {
-	dir := filepath.Join(cwd, "testdata", "sub")
-	ctx := context.Background()
-	ctx = WithWorkdir(ctx, dir)
-	ctx = WithLoadMode(ctx, DefaultLoadMode)
+	t.Run("InModule", func(t *testing.T) {
+		dir := filepath.Join(cwd, "testdata", "sub")
+		ctx := context.Background()
+		ctx = WithWorkdir(ctx, dir)
+		ctx = WithLoadMode(ctx, DefaultLoadMode)
 
-	x := NewPackages(ctx, "github.com/xoctopus/pkgx/testdata/sub")
-	p := x.Package("github.com/xoctopus/pkgx/testdata/sub")
+		x := NewPackages(ctx, "github.com/xoctopus/pkgx/testdata/sub")
+		p := x.Package("github.com/xoctopus/pkgx/testdata/sub")
 
-	Expect(t, p.SourceDir(), Equal(dir))
-	Expect(t, WithWorkdir(ctx, "any"), Equal(ctx))
-	Expect(t, WithLoadMode(ctx, gopkg.NeedDeps), Equal(ctx))
+		Expect(t, p.SourceDir(), Equal(dir))
+	})
+
+	t.Run("OutModule", func(t *testing.T) {
+		dir := filepath.Join(cwd, "..", "internal", "devpkg", "consts")
+		if _, err := os.Stat(dir); err != nil && os.IsNotExist(err) {
+			t.Skipf("skipping test because %s does not exist", dir)
+		}
+
+		ctx := context.Background()
+		ctx = WithWorkdir(ctx, dir)
+		pkgid := "github.com/xoctopus/internal/devpkg/consts"
+
+		x := NewPackages(ctx, pkgid)
+		p := x.Package(pkgid)
+		Expect(t, p.SourceDir(), Equal(dir))
+		o := p.Unwrap().Scope().Lookup("DoNotDelete")
+		Expect(t, o, NotBeNil[types.Object]())
+	})
 }

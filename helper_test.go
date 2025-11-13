@@ -10,6 +10,19 @@ import (
 	"github.com/xoctopus/pkgx"
 )
 
+func TestMustLoad(t *testing.T) {
+	ctx := context.Background()
+	ctx = pkgx.WithLoadMode(ctx, pkgx.DefaultLoadMode)
+	ExpectPanic[error](t, func() { pkgx.MustLoad(ctx, "github.com/xoctopus/pkgx_test") })
+
+	ctx = pkgx.WithTests(ctx)
+	p := pkgx.AsPackage(pkgx.MustLoad(ctx, "github.com/xoctopus/pkgx_test"))
+	Expect(t, p, NotBeNil[pkgx.Package]())
+	Expect(t, p.ID(), NotEqual(p.Path()))
+
+	ExpectPanic[error](t, func() { pkgx.MustLoad(ctx, "example.com/a/b/c") })
+}
+
 func TestLookup(t *testing.T) {
 	x, _ := pkgx.Lookup[*types.Named](context.Background(), "bytes", "Buffer")
 	Expect(t, x, NotBeNil[*types.Named]())
