@@ -16,11 +16,14 @@ func TestMustLoad(t *testing.T) {
 	ExpectPanic[error](t, func() { pkgx.Load(ctx, "github.com/xoctopus/pkgx_test") })
 
 	ctx = pkgx.WithTests(ctx)
-	p := pkgx.Load(ctx, "github.com/xoctopus/pkgx_test")
+	p := pkgx.Load(ctx, "github.com/xoctopus/pkgx/internal_test")
 	Expect(t, p, NotBeNil[pkgx.Package]())
 	Expect(t, p.ID(), NotEqual(p.Path()))
+	Expect(t, p.WrapID(), HavePrefix("xwrap_"))
 
 	ExpectPanic[error](t, func() { pkgx.Load(ctx, "example.com/a/b/c") })
+
+	Expect(t, pkgx.Load(ctx, "io"), NotBeNil[pkgx.Package]())
 }
 
 func TestLookup(t *testing.T) {

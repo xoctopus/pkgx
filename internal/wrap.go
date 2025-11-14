@@ -1,7 +1,8 @@
-package pkgx
+package internal
 
 import (
 	"strings"
+	"sync"
 
 	"github.com/xoctopus/x/syncx"
 )
@@ -14,10 +15,12 @@ const (
 )
 
 func NewWrapper() *Wrapper {
-	return &Wrapper{
-		p2w: syncx.NewSmap[string, string](),
-		w2p: syncx.NewSmap[string, string](),
-	}
+	return sync.OnceValue(func() *Wrapper {
+		return &Wrapper{
+			p2w: syncx.NewSmap[string, string](),
+			w2p: syncx.NewSmap[string, string](),
+		}
+	})()
 }
 
 // Wrapper provides bidirectional mappings between original and wrapped package

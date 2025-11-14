@@ -13,20 +13,16 @@ import (
 	"github.com/xoctopus/x/misc/must"
 	"github.com/xoctopus/x/syncx"
 	gopkg "golang.org/x/tools/go/packages"
+
+	"github.com/xoctopus/pkgx/internal"
 )
 
 func Lookup[T types.Type](ctx context.Context, path, x string) (T, bool) {
-	fn, _ := gPkgs.LoadOrStore(path, sync.OnceValue(func() Package {
-		return Load(ctx, path)
-	}))
-	p := fn()
-
-	if p != nil {
-		o := p.Unwrap().Scope().Lookup(x)
-		if o != nil {
-			t, ok := o.Type().(T)
-			return t, ok
-		}
+	p := Load(ctx, path)
+	o := p.Unwrap().Scope().Lookup(x)
+	if o != nil {
+		t, ok := o.Type().(T)
+		return t, ok
 	}
 	return *new(T), false
 }
@@ -73,5 +69,9 @@ func AsPackage(pkg *gopkg.Package) Package {
 }
 
 func Load(ctx context.Context, path string) Package {
-	return AsPackage(load(ctx, path))
+	path = internal.NewWrapper().Unwrap(path)
+	f, _ := gPkgs.LoadOrStore(path, sync.OnceValue(func() Package {
+		return AsPackage(load(ctx, path))
+	}))
+	return f()
 }

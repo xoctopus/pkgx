@@ -133,6 +133,7 @@ func (u *Packages) Modules(f func(string) bool) {
 type Package interface {
 	Path() string
 	ID() string
+	WrapID() string
 	Name() string
 
 	// Unwrap returns types.Package of this package
@@ -259,6 +260,10 @@ func (x *xpkg) Path() string {
 
 func (x *xpkg) ID() string {
 	return x.p.ID
+}
+
+func (x *xpkg) WrapID() string {
+	return internal.NewWrapper().Wrap(x.p.PkgPath)
 }
 
 func (x *xpkg) Name() string {
