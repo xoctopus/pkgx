@@ -1,10 +1,10 @@
 module github.com/xoctopus/pkgx
 
-go 1.25.3
+go 1.25.4
 
 require (
 	github.com/xoctopus/pkgx/testdata v0.0.0-20250331091630-3af90d68c457
-	github.com/xoctopus/x v0.2.1-0.20251113131642-d51532724ff6
+	github.com/xoctopus/x v0.2.1-0.20251114063749-affe921f19c0
 	golang.org/x/exp v0.0.0-20251113190631-e25ba8c21ef6
 	golang.org/x/mod v0.30.0
 	golang.org/x/tools v0.39.0
