@@ -36,37 +36,37 @@ func ExampleSourceOfNode() {
 	for _, node := range NodesOf(nodes...).Sort() {
 		n := NodeOf(node)
 		must.BeTrue(n.Pos() == node.Pos() && n.End() == node.End())
-		code := SourceOfNode(testdata, node, cwd)
+		code := SourceOfNode(testdata, node, true)
 		fmt.Println(code)
 	}
 
 	// Output:
-	//IntConstType int	// this is an inline comment
-	//pos: ../testdata/documents.go:18:6
-	//end: ../testdata/documents.go:18:22
+	// IntConstType int	// this is an inline comment
+	// pos: documents.go:18:6
+	// end: documents.go:18:22
 	//
-	//// IntConstTypeValue1 doc
-	//IntConstTypeValue1 IntConstType = iota + 1	// comment 1
-	//pos: ../testdata/documents.go:22:2
-	//end: ../testdata/documents.go:22:44
+	// // IntConstTypeValue1 doc
+	// IntConstTypeValue1 IntConstType = iota + 1	// comment 1
+	// pos: documents.go:22:2
+	// end: documents.go:22:44
 	//
-	//// TypeA doc
-	//// line1
-	//// line2
-	//// +tag1=val1_1
-	//// +tag1=val1_2
-	//TypeA int
-	//pos: ../testdata/documents.go:36:2
-	//end: ../testdata/documents.go:36:11
+	// // TypeA doc
+	// // line1
+	// // line2
+	// // +tag1=val1_1
+	// // +tag1=val1_2
+	// TypeA int
+	// pos: documents.go:36:2
+	// end: documents.go:36:11
 	//
-	//// TypeB doc
-	//// line1
-	//// line2
-	//// +tag1=val1_1
-	//// +tag1=val1_2
-	//TypeB string
-	//pos: ../testdata/documents.go:42:2
-	//end: ../testdata/documents.go:42:14
+	// // TypeB doc
+	// // line1
+	// // line2
+	// // +tag1=val1_1
+	// // +tag1=val1_2
+	// TypeB string
+	// pos: documents.go:42:2
+	// end: documents.go:42:14
 }
 
 func TestDeref(t *testing.T) {

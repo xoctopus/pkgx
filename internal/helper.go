@@ -7,7 +7,6 @@ import (
 	"go/printer"
 	"go/token"
 	"go/types"
-	"path/filepath"
 	"sort"
 	"strings"
 
@@ -16,7 +15,7 @@ import (
 )
 
 // SourceOfNode helps for debugging node source code
-func SourceOfNode(p *gopkg.Package, node ast.Node, cwd string) string {
+func SourceOfNode(p *gopkg.Package, node ast.Node, trim bool) string {
 	must.BeTrue(node != nil)
 
 	// must a valid node
@@ -29,12 +28,10 @@ func SourceOfNode(p *gopkg.Package, node ast.Node, cwd string) string {
 	b := bytes.NewBuffer(nil)
 	must.NoError(printer.Fprint(b, p.Fset, node))
 
-	dir := filepath.Dir(pos.Filename)
 	filename := pos.Filename
-	if cwd != "" {
-		dir, _ = filepath.Rel(cwd, dir)
-		must.BeTrue(dir != "")
-		filename = filepath.Join(dir, filepath.Base(filename))
+	if trim {
+		filename = strings.TrimPrefix(filename, p.Dir)
+		filename = strings.TrimPrefix(filename, "/")
 	}
 
 	return fmt.Sprintf("%s\n"+

@@ -20,10 +20,13 @@ var (
 )
 
 func init() {
+	_ = os.Setenv("GOWORK", "off")
+
 	_, filename, _, _ := runtime.Caller(0)
 	cwd = filepath.Dir(filename)
 
 	pkgs, err := gopkg.Load(&gopkg.Config{
+		Dir:  filepath.Join(cwd, "..", "testdata"),
 		Mode: gopkg.LoadMode(0b11111111111111111),
 	}, "github.com/xoctopus/pkgx/testdata")
 	must.NoError(err)

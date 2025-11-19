@@ -16,13 +16,21 @@ import (
 	_ "github.com/xoctopus/pkgx/testdata"
 )
 
+// init module dir
 var (
-	module   = "github.com/xoctopus/pkgx"
+	// make sure unit tests run without go workspace
+	_ = os.Setenv("GOWORK", "off")
+
 	testdata = "github.com/xoctopus/pkgx/testdata"
+	version  = "v1.0.0" // in go.mod
 	sub      = "github.com/xoctopus/pkgx/testdata/sub"
 	cwd, _   = os.Getwd()
+	module   = ""
 
-	u   = NewPackages(context.Background(), module, testdata)
+	u = NewPackages(
+		WithWorkdir(context.Background(), filepath.Join(cwd, "testdata")),
+		testdata,
+	)
 	pkg = u.Package(testdata)
 )
 
@@ -46,7 +54,7 @@ func TestNewPackage(t *testing.T) {
 	n := pkg.TypeNames().ElementByName("TypeA")
 	f := pkg.Functions().ElementByName("F")
 
-	Expect(t, pkg.Position(f.Node().Pos()).String(), HaveSuffix("testdata/functions.go:22:1"))
+	Expect(t, pkg.Position(f.Node().Pos()).String(), Equal(filepath.Join(cwd, "testdata", "functions.go:22:1")))
 	Expect(t, pkg.ObjectOf(f.Ident()).Name(), Equal("F"))
 
 	Expect(t, u.ModuleSum(testdata).Dir(), Equal(pkg.GoModule().Dir))
@@ -194,22 +202,12 @@ func ExamplePackages() {
 
 	// Output:
 	// imported in company:
-	// github.com/xoctopus/pkgx
-	// github.com/xoctopus/pkgx/internal
 	// github.com/xoctopus/pkgx/testdata
 	// github.com/xoctopus/pkgx/testdata/sub
-	// github.com/xoctopus/x/contextx
-	// github.com/xoctopus/x/misc/must
-	// github.com/xoctopus/x/ptrx
-	// github.com/xoctopus/x/slicex
-	// github.com/xoctopus/x/syncx
 	// directs
-	// github.com/xoctopus/pkgx
-	// github.com/xoctopus/pkgx/internal
 	// github.com/xoctopus/pkgx/testdata
 	// github.com/xoctopus/pkgx/testdata/sub
 	// modules
-	// github.com/xoctopus/pkgx
 	// github.com/xoctopus/pkgx/testdata
 }
 
@@ -223,7 +221,7 @@ func TestWithWorkdir(t *testing.T) {
 		x := NewPackages(ctx, "github.com/xoctopus/pkgx/testdata/sub")
 		p := x.Package("github.com/xoctopus/pkgx/testdata/sub")
 
-		Expect(t, p.SourceDir(), Equal(dir))
+		Expect(t, p.SourceDir(), Equal(filepath.Join(cwd, "testdata", "sub")))
 	})
 
 	t.Run("OutModule", func(t *testing.T) {

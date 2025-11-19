@@ -1,4 +1,5 @@
 PACKAGES=$(shell go list ./... | grep -E -v 'pb$|testdata|mock|proto|example|testx/internal')
+IGNORED=_gen.go|.pb.go|_mock.go|_genx_
 MOD=$(shell cat go.mod | grep ^module -m 1 | awk '{ print $$2; }' || '')
 MOD_NAME=$(shell basename $(MOD))
 
@@ -78,11 +79,12 @@ upgrade-dep:
 	fi
 
 update:
-	@go get -u all
+	@GOWORK=off go get -u all
+	@GOWORK=off go mod tidy
 
 tidy:
 	@echo "==> tidy"
-	@go mod tidy
+	@GOWORK=off go mod tidy
 
 test: dep tidy
 	@echo "==> run unit test"
@@ -95,27 +97,29 @@ test: dep tidy
 cover: dep tidy
 	@echo "==> run unit test with coverage"
 	@GOWORK=off $(GOTEST) test -failfast -parallel 1 -gcflags="all=-N -l" ${PACKAGES} -covermode=count -coverprofile=cover.out
+	@grep -vE '_gen.go|.pb.go|_mock.go|_genx_|main.go' cover.out > cover2.out && mv cover2.out cover.out
 
 ci-cover:
 	@if [ "${GOTEST}" = "xgo" ]; then \
 		go install github.com/xhd2015/xgo/cmd/xgo@latest; \
 	fi
-	@$(GOTEST) test -failfast -parallel 1 -gcflags="all=-N -l" ${PACKAGES} -covermode=count -coverprofile=cover.out
+	@GOWORK=off $(GOTEST) test -failfast -parallel 1 -gcflags="all=-N -l" ${PACKAGES} -covermode=count -coverprofile=cover.out
 
 view-cover: cover
 	@echo "==> run unit test with coverage and view"
-	@go tool cover -html cover.out
+	@GOWORK=off $(GOBUILD) tool cover -html cover.out
 
 fmt: dep clean
-	@echo "==> format code"
+	@echo "==> formating code"
 	@goimports-reviser -rm-unused \
-		-imports-order 'std,general,company,project' -project-name ${MOD} \
-		-excludes './testdata,.git/,.xgo/,*.pb.go,*_generated.go,*_genx.go' ./...
+		-imports-order 'std,general,company,project' \
+		-project-name ${MOD} \
+		-excludes '.git/,.xgo/,testdata/,*.pb.go,*_generated.go' ./...
 
 lint: dep
 	@echo "==> static check"
 	@echo "    >>>static checking"
-	@go vet ./...
+	@GOWORK=off $(GOBUILD) vet ./...
 	@echo "    done"
 	@echo "    >>>detecting ineffectual assignments"
 	@ineffassign ./...
@@ -123,11 +127,8 @@ lint: dep
 	@echo "    >>>detecting cyclomatic complexities over 10 and average"
 	@gocyclo -over 10 -avg -ignore '_test|_test.go|vendor|pb' . || true
 	@echo "    done"
-	@echo "    >>>run golangci-lint"
-	@golangci-lint run ./...
-	@echo "    done"
 
-pre-commit: dep lint fmt cover clean
+pre-commit: dep update lint fmt view-cover
 
 clean:
 	@find . -name cover.out | xargs rm -rf

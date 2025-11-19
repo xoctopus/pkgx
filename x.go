@@ -98,8 +98,8 @@ type Packages struct {
 	entries  []string
 	fileset  *token.FileSet
 	packages syncx.Map[string, Package]
-	modules  syncx.Set[string]
-	directs  syncx.Set[string]
+	modules  *syncx.Set[string]
+	directs  *syncx.Set[string]
 	sums     syncx.Map[string, ModuleSum]
 }
 
