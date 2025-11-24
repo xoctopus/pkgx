@@ -10,6 +10,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/xoctopus/x/contextx"
 	. "github.com/xoctopus/x/testx"
 
 	. "github.com/xoctopus/pkgx"
@@ -28,7 +29,7 @@ var (
 	module   = ""
 
 	u = NewPackages(
-		WithWorkdir(context.Background(), filepath.Join(cwd, "testdata")),
+		CtxWorkdir.With(context.Background(), filepath.Join(cwd, "testdata")),
 		testdata,
 	)
 	pkg = u.Package(testdata)
@@ -213,10 +214,10 @@ func ExamplePackages() {
 
 func TestWithWorkdir(t *testing.T) {
 	t.Run("InModule", func(t *testing.T) {
-		dir := filepath.Join(cwd, "testdata", "sub")
-		ctx := context.Background()
-		ctx = WithWorkdir(ctx, dir)
-		ctx = WithLoadMode(ctx, DefaultLoadMode)
+		ctx := contextx.Compose(
+			CtxWorkdir.Carry(filepath.Join(cwd, "testdata", "sub")),
+			CtxLoadMode.Carry(DefaultLoadMode),
+		)(context.Background())
 
 		x := NewPackages(ctx, "github.com/xoctopus/pkgx/testdata/sub")
 		p := x.Package("github.com/xoctopus/pkgx/testdata/sub")
@@ -230,8 +231,7 @@ func TestWithWorkdir(t *testing.T) {
 			t.Skipf("skipping test because %s does not exist", dir)
 		}
 
-		ctx := context.Background()
-		ctx = WithWorkdir(ctx, dir)
+		ctx := CtxWorkdir.With(context.Background(), dir)
 		pkgid := "github.com/xoctopus/internal/devpkg/consts"
 
 		x := NewPackages(ctx, pkgid)

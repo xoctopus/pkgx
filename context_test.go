@@ -2,11 +2,13 @@ package pkgx_test
 
 import (
 	"context"
+	"fmt"
 	"go/token"
 	"os"
 	"path/filepath"
 	"testing"
 
+	"github.com/xoctopus/x/contextx"
 	. "github.com/xoctopus/x/testx"
 
 	. "github.com/xoctopus/pkgx"
@@ -36,12 +38,15 @@ func TestConfig(t *testing.T) {
 
 	workdir := filepath.Join(os.Getenv("GOROOT"), "src")
 
-	ctx = WithWorkdir(ctx, workdir)
-	ctx = WithTests(ctx)
-	ctx = WithLoadMode(ctx, LoadImports)
-	ctx = WithLogger(ctx, func(string, ...any) {})
-	ctx = WithNamer(ctx, &namer{})
-	ctx = WithFileset(ctx, token.NewFileSet())
+	ctx = contextx.Compose(
+		CtxWorkdir.Carry(workdir),
+		CtxLoadTests.Carry(true),
+		CtxLoadMode.Carry(LoadImports),
+		CtxPkgNamer.Carry(&namer{}),
+		CtxFileset.Carry(token.NewFileSet()),
+		CtxLogger.Carry(func(msg string, args ...any) { fmt.Printf(msg, args...) }),
+	)(ctx)
+
 	defv = Config(ctx)
 	Expect(t, defv.Tests, BeTrue())
 	Expect(t, defv.Mode, Equal(LoadImports))

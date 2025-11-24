@@ -44,7 +44,7 @@ func NewPackages(ctx context.Context, patterns ...string) *Packages {
 		directs:  syncx.NewSet[string](),
 		sums:     syncx.NewSmap[string, ModuleSum](),
 	}
-	ctx = WithFileset(ctx, u.fileset)
+	ctx = CtxFileset.With(ctx, u.fileset)
 
 	packages, err := gopkg.Load(Config(ctx), patterns...)
 	must.NoErrorF(err, "failed to load packages: %v", patterns)

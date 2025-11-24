@@ -12,10 +12,10 @@ import (
 
 func TestMustLoad(t *testing.T) {
 	ctx := context.Background()
-	ctx = pkgx.WithLoadMode(ctx, pkgx.DefaultLoadMode)
+	ctx = pkgx.CtxLoadMode.With(ctx, pkgx.DefaultLoadMode)
 	ExpectPanic[error](t, func() { pkgx.Load(ctx, "github.com/xoctopus/pkgx_test") })
 
-	ctx = pkgx.WithTests(ctx)
+	ctx = pkgx.CtxLoadTests.With(ctx, true)
 	p := pkgx.Load(ctx, "github.com/xoctopus/pkgx/internal_test")
 	Expect(t, p, NotBeNil[pkgx.Package]())
 	Expect(t, p.ID(), NotEqual(p.Path()))
