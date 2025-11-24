@@ -4,7 +4,7 @@ go 1.25.4
 
 require (
 	github.com/xoctopus/pkgx/testdata v1.0.0
-	github.com/xoctopus/x v0.2.1-0.20251124074348-0bcbca180b17
+	github.com/xoctopus/x v0.2.1-0.20251124085551-4660064d025a
 	golang.org/x/exp v0.0.0-20251113190631-e25ba8c21ef6
 	golang.org/x/mod v0.30.0
 	golang.org/x/tools v0.39.0
