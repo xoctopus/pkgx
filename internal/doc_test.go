@@ -74,3 +74,6 @@ func TestParseDocument(t *testing.T) {
 		Expect(t, internal.ParseDocument(nil).String(), Equal("tags: desc:"))
 	})
 }
+
+func TestDocFields(t *testing.T) {
+}

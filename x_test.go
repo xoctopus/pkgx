@@ -55,6 +55,7 @@ func TestNewPackage(t *testing.T) {
 	n := pkg.TypeNames().ElementByName("TypeA")
 	f := pkg.Functions().ElementByName("F")
 
+	Expect(t, pkg.DocOf(n.Node().Pos()), NotBeNil[*Doc]())
 	Expect(t, pkg.Position(f.Node().Pos()).String(), Equal(filepath.Join(cwd, "testdata", "functions.go:22:1")))
 	Expect(t, pkg.ObjectOf(f.Ident()).Name(), Equal("F"))
 

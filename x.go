@@ -148,6 +148,9 @@ type Package interface {
 	Doc() *Doc
 	// SourceDir returns dir path of current package
 	SourceDir() string
+	// DocOf returns doc of node
+	DocOf(token.Pos) *Doc
+
 	Eval(ast.Expr) (types.TypeAndValue, error)
 	Files() []*ast.File
 	FileSet() *token.FileSet
@@ -163,6 +166,7 @@ func newx(p *gopkg.Package) Package {
 	must.BeTrue(p != nil && len(p.Errors) == 0)
 	x := &xpkg{
 		p:         p,
+		docs:      syncx.NewXmap[token.Pos, *Doc](),
 		imports:   syncx.NewXmap[string, Package](),
 		typenames: internal.NewObjects[*types.TypeName, *TypeName](),
 		constants: internal.NewObjects[*types.Const, *Constant](),
@@ -185,6 +189,7 @@ func newx(p *gopkg.Package) Package {
 					switch s := spec.(type) {
 					case *ast.ValueSpec:
 						doc := internal.ParseDocument(d.Doc, s.Doc, s.Comment)
+						x.docs.Store(s.Pos(), doc)
 						for _, ident := range s.Names {
 							x.constants.(internal.ObjectsManager[*types.Const, *Constant]).
 								Add(&Constant{
@@ -195,15 +200,18 @@ func newx(p *gopkg.Package) Package {
 										doc,
 									),
 								})
+							x.docs.Store(ident.Pos(), doc)
 						}
 					case *ast.TypeSpec:
+						doc := internal.ParseDocument(d.Doc, s.Doc, s.Comment)
+						x.docs.Store(s.Pos(), doc)
 						x.typenames.(internal.ObjectsManager[*types.TypeName, *TypeName]).
 							Add(internal.NewTypeName(
 								internal.NewObject(
 									s,
 									s.Name,
 									p.TypesInfo.Defs[s.Name].(*types.TypeName),
-									internal.ParseDocument(d.Doc, s.Doc, s.Comment),
+									doc,
 								),
 							))
 					}
@@ -219,6 +227,8 @@ func newx(p *gopkg.Package) Package {
 					t := types.Unalias(internal.Deref(recv.Type()))
 					methods[t] = append(methods[t], f)
 				}
+			case *ast.Field:
+				x.docs.Store(d.Pos(), internal.ParseDocument(d.Doc, d.Comment))
 			}
 			return true
 		})
@@ -239,10 +249,11 @@ func newx(p *gopkg.Package) Package {
 }
 
 type xpkg struct {
-	p   *gopkg.Package
-	u   *Packages
-	dir *string
-	doc *Doc
+	p    *gopkg.Package
+	u    *Packages
+	dir  *string
+	doc  *Doc
+	docs syncx.Map[token.Pos, *Doc]
 
 	// fileset *token.FileSet
 	imports syncx.Map[string, Package]
@@ -284,6 +295,11 @@ func (x *xpkg) GoModule() *gopkg.Module {
 
 func (x *xpkg) Doc() *Doc {
 	return x.doc
+}
+
+func (x *xpkg) DocOf(pos token.Pos) *Doc {
+	d, _ := x.docs.Load(pos)
+	return d
 }
 
 func (x *xpkg) PackageByPath(path string) Package {
