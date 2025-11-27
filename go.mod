@@ -13,6 +13,6 @@ require (
 require (
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
-	github.com/xoctopus/errx v0.0.0-20251119064822-0543182caf80 // indirect
+	github.com/xoctopus/errx v0.0.0-20251126100440-d8ed5b465902 // indirect
 	golang.org/x/sync v0.18.0 // indirect
 )

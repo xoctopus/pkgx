@@ -15,6 +15,7 @@ func TestWrapAndUnwrap(t *testing.T) {
 		{"encoding/json", "xwrap_encoding_s_json"},
 		{"github.com/path/to/pkg.Type", "xwrap_github_d_com_s_path_s_to_s_pkg_d_Type"},
 		{"github.com/path/to/pkg_test.Type", "xwrap_github_d_com_s_path_s_to_s_pkg_u_test_d_Type"},
+		{"abc-def", "xwrap_abc_k_def"},
 	}
 	w := internal.NewWrapper()
 

@@ -8,10 +8,11 @@ import (
 )
 
 const (
-	prefix     = "xwrap_"
-	underscore = "_u_"
-	dot        = "_d_"
-	slash      = "_s_"
+	prefix                  = "xwrap_"
+	underscore_, underscore = "_", "_u_"
+	dot_, dot               = ".", "_d_"
+	slash_, slash           = "/", "_s_"
+	dash_, dash             = "-", "_k_"
 )
 
 func NewWrapper() *Wrapper {
@@ -54,9 +55,10 @@ func (w *Wrapper) Unwrap(x string) string {
 
 	p := x
 	p = strings.TrimPrefix(p, prefix)
-	p = strings.ReplaceAll(p, slash, "/")
-	p = strings.ReplaceAll(p, dot, ".")
-	p = strings.ReplaceAll(p, underscore, "_")
+	p = strings.ReplaceAll(p, slash, slash_)
+	p = strings.ReplaceAll(p, dot, dot_)
+	p = strings.ReplaceAll(p, dash, dash_)
+	p = strings.ReplaceAll(p, underscore, underscore_)
 
 	if !strings.Contains(p, ".") && !strings.Contains(p, "/") {
 		x = p
@@ -77,14 +79,15 @@ func (w *Wrapper) Wrap(p string) string {
 		return p
 	}
 
-	if !strings.Contains(p, ".") && !strings.Contains(p, "/") {
+	if !strings.Contains(p, ".") && !strings.Contains(p, "/") && !strings.Contains(p, "-") {
 		return p
 	}
 
 	x := p
-	x = strings.ReplaceAll(x, "_", underscore)
-	x = strings.ReplaceAll(x, ".", dot)
-	x = strings.ReplaceAll(x, "/", slash)
+	x = strings.ReplaceAll(x, underscore_, underscore)
+	x = strings.ReplaceAll(x, dash_, dash)
+	x = strings.ReplaceAll(x, dot_, dot)
+	x = strings.ReplaceAll(x, slash_, slash)
 	x = prefix + x
 
 	w.p2w.Store(p, x)
