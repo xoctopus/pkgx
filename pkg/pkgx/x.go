@@ -39,10 +39,10 @@ func NewPackages(ctx context.Context, patterns ...string) *Packages {
 	u := &Packages{
 		entries:  patterns,
 		fileset:  token.NewFileSet(),
-		packages: syncx.NewSmap[string, Package](),
+		packages: syncx.NewXmap[string, Package](),
 		modules:  syncx.NewSet[string](),
 		directs:  syncx.NewSet[string](),
-		sums:     syncx.NewSmap[string, ModuleSum](),
+		sums:     syncx.NewXmap[string, ModuleSum](),
 	}
 	ctx = CtxFileset.With(ctx, u.fileset)
 
@@ -60,11 +60,11 @@ func NewPackages(ctx context.Context, patterns ...string) *Packages {
 				register(p.Imports[path])
 			}
 		}
-		u.packages.Store(p.ID, x)
+		u.packages.Store(p.PkgPath, x)
 
 		if p.Module != nil {
 			if u.modules.Exists(p.Module.Path) {
-				u.directs.Store(p.ID)
+				u.directs.Store(p.PkgPath)
 				u.modules.Store(p.Module.Path)
 				s, _ := u.sums.LoadOrStore(p.Module.Path, internal.NewSum(p.Module.Dir))
 				s.Add(p)
@@ -133,7 +133,6 @@ func (u *Packages) Modules(f func(string) bool) {
 type Package interface {
 	Path() string
 	ID() string
-	WrapID() string
 	Name() string
 
 	// Unwrap returns types.Package of this package
@@ -271,10 +270,6 @@ func (x *xpkg) Path() string {
 
 func (x *xpkg) ID() string {
 	return x.p.ID
-}
-
-func (x *xpkg) WrapID() string {
-	return internal.NewWrapper().Wrap(x.p.PkgPath)
 }
 
 func (x *xpkg) Name() string {

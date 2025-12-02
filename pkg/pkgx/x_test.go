@@ -29,54 +29,69 @@ var (
 	dir      = filepath.Join(cwd, "..", "..", "testdata")
 
 	u = NewPackages(
-		CtxWorkdir.With(context.Background(), dir),
+		contextx.Compose(
+			CtxWorkdir.Carry(dir),
+			CtxLoadTests.Carry(true),
+		)(context.Background()),
 		testdata,
 	)
 	pkg = u.Package(testdata)
 )
 
 func TestNewPackage(t *testing.T) {
-	Expect(t, pkg.Unwrap().Path(), Equal(testdata))
-	Expect(t, pkg.Unwrap().Name(), Equal("testdata"))
-	Expect(t, pkg.GoPackage().ID, Equal(testdata))
-	Expect(t, pkg.GoPackage().Name, Equal("testdata"))
-	Expect(t, pkg.Name(), Equal("testdata"))
+	t.Run("Basics", func(t *testing.T) {
+		Expect(t, pkg.Unwrap().Path(), Equal(testdata))
+		Expect(t, pkg.Unwrap().Name(), Equal("testdata"))
+		Expect(t, pkg.GoPackage().ID, Equal(testdata))
+		Expect(t, pkg.GoPackage().Name, Equal("testdata"))
+		Expect(t, pkg.Name(), Equal("testdata"))
+		Expect(t, pkg.Path(), Equal(testdata))
+		Expect(t, pkg.ID(), Equal(testdata))
+		_ = pkg.Files()
+		_ = pkg.FileSet()
+		_ = pkg.Doc()
+	})
 
-	Expect(t, pkg.GoModule().Path, Equal(testdata))
-	Expect(t, pkg.PackageByPath(sub).GoModule().Path, Equal(testdata))
+	t.Run("DifferentPathAndID", func(t *testing.T) {
+		path := testdata + "_test"
+		p := u.Package(path)
+		Expect(t, p, NotBeNil[Package]())
+		Expect(t, p.Path(), Equal(path))
+		Expect(t, p.ID(), NotEqual(path))
+	})
 
-	Expect(t, pkg.PackageByPath("not/imported"), BeNil[Package]())
+	t.Run("Module", func(t *testing.T) {
+		Expect(t, pkg.GoModule().Path, Equal(testdata))
+		Expect(t, pkg.PackageByPath(sub).GoModule().Path, Equal(testdata))
+		Expect(t, pkg.PackageByPath("not/imported"), BeNil[Package]())
 
-	Expect(t, pkg.PackageByPath("fmt").SourceDir(), Equal(""))
-	Expect(t, pkg.SourceDir(), Equal(dir))
-	Expect(t, pkg.SourceDir(), Equal(pkg.GoModule().Dir))
-	Expect(t, pkg.PackageByPath(sub).SourceDir(), Equal(filepath.Join(dir, "sub")))
+		Expect(t, pkg.PackageByPath("fmt").SourceDir(), Equal(""))
+		Expect(t, pkg.SourceDir(), Equal(dir))
+		Expect(t, pkg.SourceDir(), Equal(pkg.GoModule().Dir))
+		Expect(t, pkg.PackageByPath(sub).SourceDir(), Equal(filepath.Join(dir, "sub")))
+		Expect(t, u.ModuleSum(testdata).Dir(), Equal(pkg.GoModule().Dir))
+	})
 
-	c := pkg.Constants().ElementByName("IntConstTypeValue1")
-	n := pkg.TypeNames().ElementByName("TypeA")
-	f := pkg.Functions().ElementByName("F")
+	t.Run("LookupAndEval", func(t *testing.T) {
+		c := pkg.Constants().ElementByName("IntConstTypeValue1")
+		n := pkg.TypeNames().ElementByName("TypeA")
+		f := pkg.Functions().ElementByName("F")
 
-	Expect(t, pkg.DocOf(n.Node().Pos()), NotBeNil[*Doc]())
-	Expect(t, pkg.Position(f.Node().Pos()).String(), Equal(filepath.Join(dir, "functions.go:22:1")))
-	Expect(t, pkg.ObjectOf(f.Ident()).Name(), Equal("F"))
+		Expect(t, pkg.DocOf(n.Node().Pos()), NotBeNil[*Doc]())
+		Expect(t, pkg.Position(f.Node().Pos()).String(), Equal(filepath.Join(dir, "functions.go:22:1")))
+		Expect(t, pkg.ObjectOf(f.Ident()).Name(), Equal("F"))
 
-	Expect(t, u.ModuleSum(testdata).Dir(), Equal(pkg.GoModule().Dir))
+		_, err := pkg.Eval(nil)
+		Expect(t, err, NotBeNil[error]())
 
-	_, err := pkg.Eval(nil)
-	Expect(t, err, NotBeNil[error]())
-
-	tav, _ := pkg.Eval(f.Ident())
-	Expect(t, tav.Type.String(), Equal("func()"))
-	tav, _ = pkg.Eval(n.Ident())
-	Expect(t, tav.Type.String(), Equal("github.com/xoctopus/pkgx/testdata.TypeA"))
-	tav, _ = pkg.Eval(c.Ident())
-	Expect(t, tav.Type.String(), Equal("github.com/xoctopus/pkgx/testdata.IntConstType"))
-	Expect(t, tav.Value.String(), Equal("1"))
-
-	// TODO
-	_ = pkg.Files()
-	_ = pkg.FileSet()
-	_ = pkg.Doc()
+		tav, _ := pkg.Eval(f.Ident())
+		Expect(t, tav.Type.String(), Equal("func()"))
+		tav, _ = pkg.Eval(n.Ident())
+		Expect(t, tav.Type.String(), Equal("github.com/xoctopus/pkgx/testdata.TypeA"))
+		tav, _ = pkg.Eval(c.Ident())
+		Expect(t, tav.Type.String(), Equal("github.com/xoctopus/pkgx/testdata.IntConstType"))
+		Expect(t, tav.Value.String(), Equal("1"))
+	})
 }
 
 func ExamplePackage_Constants() {
@@ -174,7 +189,8 @@ func ExamplePackages() {
 	paths := make([]string, 0)
 	fmt.Println("imported in company:")
 	for path := range u.Packages {
-		if strings.HasPrefix(path, "github.com/xoctopus") {
+		if strings.HasPrefix(path, "github.com/xoctopus") &&
+			!(strings.HasSuffix(path, ".test") || strings.HasSuffix(path, "_test")) {
 			paths = append(paths, path)
 		}
 	}
@@ -186,7 +202,9 @@ func ExamplePackages() {
 	fmt.Println("directs")
 	paths = paths[:0]
 	for path := range u.Directs {
-		paths = append(paths, path)
+		if !(strings.HasSuffix(path, ".test") || strings.HasSuffix(path, "_test")) {
+			paths = append(paths, path)
+		}
 	}
 	sort.Strings(paths)
 	for _, path := range paths {
