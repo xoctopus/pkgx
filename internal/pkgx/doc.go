@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/xoctopus/x/slicex"
-	"golang.org/x/exp/maps"
 )
 
 func ParseDocument(doc *ast.CommentGroup, comments ...*ast.CommentGroup) *Doc {
@@ -76,14 +75,16 @@ func ParseDocument(doc *ast.CommentGroup, comments ...*ast.CommentGroup) *Doc {
 		d.tags[tag] = trimmed
 	}
 
-	d.keys = maps.Keys(d.tags)
+	for key := range d.tags {
+		d.keys = append(d.keys, key)
+	}
 	sort.Strings(d.keys)
 	return d
 }
 
 type Doc struct {
 	tags map[string][]string
-	keys []string
+	keys []string // sorted
 	desc []string
 	*ast.CommentGroup
 }
