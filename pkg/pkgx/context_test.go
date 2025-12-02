@@ -16,7 +16,7 @@ import (
 
 type namer struct{}
 
-func (*namer) Package(p string) string {
+func (*namer) PackageName(p string) string {
 	if p == "io" {
 		return "std_io"
 	}

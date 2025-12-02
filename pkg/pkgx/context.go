@@ -9,7 +9,7 @@ import (
 )
 
 type PkgNamer interface {
-	Package(id string) (name string)
+	PackageName(id string) (name string)
 }
 
 const (
@@ -32,7 +32,7 @@ var (
 
 func PackageName(ctx context.Context, p Package) string {
 	if namer, ok := CtxPkgNamer.From(ctx); ok && namer != nil {
-		return namer.Package(p.ID())
+		return namer.PackageName(p.ID())
 	}
 	return p.Name()
 }
