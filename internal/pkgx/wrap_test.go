@@ -1,11 +1,11 @@
-package internal_test
+package pkgx_test
 
 import (
 	"testing"
 
 	. "github.com/xoctopus/x/testx"
 
-	"github.com/xoctopus/pkgx/internal"
+	"github.com/xoctopus/pkgx/internal/pkgx"
 )
 
 func TestWrapAndUnwrap(t *testing.T) {
@@ -17,7 +17,7 @@ func TestWrapAndUnwrap(t *testing.T) {
 		{"github.com/path/to/pkg_test.Type", "xwrap_github_d_com_s_path_s_to_s_pkg_u_test_d_Type"},
 		{"abc-def", "xwrap_abc_k_def"},
 	}
-	w := internal.NewWrapper()
+	w := pkgx.NewWrapper()
 
 	w.Clear()
 	for _, c := range cases {

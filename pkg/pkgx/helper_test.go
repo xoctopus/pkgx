@@ -7,7 +7,7 @@ import (
 
 	. "github.com/xoctopus/x/testx"
 
-	"github.com/xoctopus/pkgx"
+	"github.com/xoctopus/pkgx/pkg/pkgx"
 )
 
 func TestMustLoad(t *testing.T) {
@@ -16,7 +16,7 @@ func TestMustLoad(t *testing.T) {
 	ExpectPanic[error](t, func() { pkgx.Load(ctx, "github.com/xoctopus/pkgx_test") })
 
 	ctx = pkgx.CtxLoadTests.With(ctx, true)
-	p := pkgx.Load(ctx, "github.com/xoctopus/pkgx/internal_test")
+	p := pkgx.Load(ctx, "github.com/xoctopus/pkgx/pkg/pkgx_test")
 	Expect(t, p, NotBeNil[pkgx.Package]())
 	Expect(t, p.ID(), NotEqual(p.Path()))
 	Expect(t, p.WrapID(), HavePrefix("xwrap_"))

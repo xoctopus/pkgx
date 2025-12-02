@@ -11,7 +11,7 @@ import (
 	"github.com/xoctopus/x/contextx"
 	. "github.com/xoctopus/x/testx"
 
-	. "github.com/xoctopus/pkgx"
+	. "github.com/xoctopus/pkgx/pkg/pkgx"
 )
 
 type namer struct{}

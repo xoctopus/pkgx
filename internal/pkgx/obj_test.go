@@ -1,4 +1,4 @@
-package internal_test
+package pkgx_test
 
 import (
 	"context"
@@ -8,14 +8,14 @@ import (
 
 	. "github.com/xoctopus/x/testx"
 
-	"github.com/xoctopus/pkgx"
-	. "github.com/xoctopus/pkgx/internal"
+	pkgi "github.com/xoctopus/pkgx/internal/pkgx"
+	"github.com/xoctopus/pkgx/pkg/pkgx"
 )
 
 var (
 	u = pkgx.NewPackages(
 		context.Background(),
-		"github.com/xoctopus/pkgx",
+		// "github.com/xoctopus/pkgx",
 		"github.com/xoctopus/pkgx/testdata",
 	)
 	pkg = u.Package("github.com/xoctopus/pkgx/testdata")
@@ -23,13 +23,13 @@ var (
 
 func TestNewObject(t *testing.T) {
 	t.Run("InvalidObject", func(t *testing.T) {
-		o := NewObject[*types.Func](nil, nil, nil, nil)
+		o := pkgi.NewObject[*types.Func](nil, nil, nil, nil)
 		Expect(t, o.IsNil(), BeTrue())
 		Expect(t, o.Node(), BeNil[ast.Node]())
 		Expect(t, o.Name(), HaveLen[string](0))
 		Expect(t, o.Ident(), BeNil[*ast.Ident]())
 		Expect(t, o.Exposer(), BeNil[*types.Func]())
-		Expect(t, o.Doc(), BeNil[*Doc]())
+		Expect(t, o.Doc(), BeNil[*pkgi.Doc]())
 		Expect(t, o.Type(), BeNil[types.Type]())
 		Expect(t, o.TypeName(), HaveLen[string](0))
 	})
@@ -72,13 +72,13 @@ func TestObject(t *testing.T) {
 		}
 	}
 
-	functions.(ObjectsManager[*types.Func, *Function]).
-		Add(&Function{Object: NewObject(nil, nil, &types.Func{}, nil)})
+	functions.(pkgi.ObjectsManager[*types.Func, *pkgi.Function]).
+		Add(&pkgi.Function{Object: pkgi.NewObject(nil, nil, &types.Func{}, nil)})
 	Expect(t, functions.Len(), Equal(2))
 
 	fu := functions.ExposerOf(node)
 	Expect(t, fu, Equal[*types.Func](f.Exposer()))
-	fu = functions.ExposerOf(Node{1, 1})
+	fu = functions.ExposerOf(pkgi.Node{1, 1})
 	Expect(t, fu, BeNil[*types.Func]())
 
 	for fu = range functions.Exposers() {
@@ -98,7 +98,7 @@ func TestObject(t *testing.T) {
 		}
 	}
 
-	n.Methods().Range(func(key string, f *Function) bool {
+	n.Methods().Range(func(key string, f *pkgi.Function) bool {
 		Expect(t, f.Name(), Equal(key))
 		if key == "Name" {
 			Expect(t, f.PtrRecv(), BeTrue())

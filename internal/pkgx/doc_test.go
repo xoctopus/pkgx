@@ -1,4 +1,4 @@
-package internal_test
+package pkgx_test
 
 import (
 	"go/ast"
@@ -7,11 +7,11 @@ import (
 
 	. "github.com/xoctopus/x/testx"
 
-	"github.com/xoctopus/pkgx/internal"
+	"github.com/xoctopus/pkgx/internal/pkgx"
 )
 
 // doc is document of `IntConstType`
-var doc *internal.Doc
+var doc *pkgx.Doc
 
 func init() {
 	for _, f := range pkg.GoPackage().Syntax {
@@ -19,7 +19,7 @@ func init() {
 			if decl, ok := node.(*ast.GenDecl); ok {
 				for _, spec := range decl.Specs {
 					if spec, ok := spec.(*ast.TypeSpec); ok && spec.Name.Name == "IntConstType" {
-						doc = internal.ParseDocument(decl.Doc, spec.Doc, spec.Comment)
+						doc = pkgx.ParseDocument(decl.Doc, spec.Doc, spec.Comment)
 						return false
 					}
 				}
@@ -31,7 +31,7 @@ func init() {
 
 func TestParseDocument(t *testing.T) {
 	t.Run("ParseDocumentForIntConstType", func(t *testing.T) {
-		Expect(t, doc, NotBeNil[*internal.Doc]())
+		Expect(t, doc, NotBeNil[*pkgx.Doc]())
 		Expect(t, doc.TagKeys(), Equal([]string{"key1", "key2", "key3", "key4"}))
 		Expect(t, doc.Desc(), Equal([]string{
 			"IntConstType defines a named constant type with integer underlying in a single `GenDecl`",
@@ -61,19 +61,19 @@ func TestParseDocument(t *testing.T) {
 	})
 
 	t.Run("ParsePackageDocument", func(t *testing.T) {
-		var doc *internal.Doc
+		var doc *pkgx.Doc
 		for _, f := range testdata.Syntax {
 			if filepath.Base(testdata.Fset.File(f.Pos()).Name()) == "doc.go" {
-				doc = internal.ParseDocument(f.Doc, f.Comments...)
+				doc = pkgx.ParseDocument(f.Doc, f.Comments...)
 			}
 		}
 		Expect(t, doc.String(), Equal("tags:[genx:apis][genx:enum][genx:model] desc:[Package testdata contains testdata for pkgx.][package desc following here][file comment here]"))
 	})
 
 	t.Run("NoDocument", func(t *testing.T) {
-		Expect(t, internal.ParseDocument(nil).String(), Equal("tags: desc:"))
+		Expect(t, pkgx.ParseDocument(nil).String(), Equal("tags: desc:"))
+		Expect(t, pkgx.ParseDocument(
+			&ast.CommentGroup{List: []*ast.Comment{{}}},
+		).String(), Equal("tags: desc:"))
 	})
-}
-
-func TestDocFields(t *testing.T) {
 }

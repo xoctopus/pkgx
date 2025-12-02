@@ -13,7 +13,7 @@ import (
 	"github.com/xoctopus/x/contextx"
 	. "github.com/xoctopus/x/testx"
 
-	. "github.com/xoctopus/pkgx"
+	. "github.com/xoctopus/pkgx/pkg/pkgx"
 	_ "github.com/xoctopus/pkgx/testdata"
 )
 
@@ -26,10 +26,10 @@ var (
 	version  = "v1.0.0" // in go.mod
 	sub      = "github.com/xoctopus/pkgx/testdata/sub"
 	cwd, _   = os.Getwd()
-	module   = ""
+	dir      = filepath.Join(cwd, "..", "..", "testdata")
 
 	u = NewPackages(
-		CtxWorkdir.With(context.Background(), filepath.Join(cwd, "testdata")),
+		CtxWorkdir.With(context.Background(), dir),
 		testdata,
 	)
 	pkg = u.Package(testdata)
@@ -47,16 +47,16 @@ func TestNewPackage(t *testing.T) {
 	Expect(t, pkg.PackageByPath("not/imported"), BeNil[Package]())
 
 	Expect(t, pkg.PackageByPath("fmt").SourceDir(), Equal(""))
-	Expect(t, pkg.SourceDir(), Equal(filepath.Join(cwd, "testdata")))
+	Expect(t, pkg.SourceDir(), Equal(dir))
 	Expect(t, pkg.SourceDir(), Equal(pkg.GoModule().Dir))
-	Expect(t, pkg.PackageByPath(sub).SourceDir(), Equal(filepath.Join(cwd, "testdata", "sub")))
+	Expect(t, pkg.PackageByPath(sub).SourceDir(), Equal(filepath.Join(dir, "sub")))
 
 	c := pkg.Constants().ElementByName("IntConstTypeValue1")
 	n := pkg.TypeNames().ElementByName("TypeA")
 	f := pkg.Functions().ElementByName("F")
 
 	Expect(t, pkg.DocOf(n.Node().Pos()), NotBeNil[*Doc]())
-	Expect(t, pkg.Position(f.Node().Pos()).String(), Equal(filepath.Join(cwd, "testdata", "functions.go:22:1")))
+	Expect(t, pkg.Position(f.Node().Pos()).String(), Equal(filepath.Join(dir, "functions.go:22:1")))
 	Expect(t, pkg.ObjectOf(f.Ident()).Name(), Equal("F"))
 
 	Expect(t, u.ModuleSum(testdata).Dir(), Equal(pkg.GoModule().Dir))
@@ -216,18 +216,18 @@ func ExamplePackages() {
 func TestWithWorkdir(t *testing.T) {
 	t.Run("InModule", func(t *testing.T) {
 		ctx := contextx.Compose(
-			CtxWorkdir.Carry(filepath.Join(cwd, "testdata", "sub")),
+			CtxWorkdir.Carry(filepath.Join(dir, "sub")),
 			CtxLoadMode.Carry(DefaultLoadMode),
 		)(context.Background())
 
 		x := NewPackages(ctx, "github.com/xoctopus/pkgx/testdata/sub")
 		p := x.Package("github.com/xoctopus/pkgx/testdata/sub")
 
-		Expect(t, p.SourceDir(), Equal(filepath.Join(cwd, "testdata", "sub")))
+		Expect(t, p.SourceDir(), Equal(filepath.Join(dir, "sub")))
 	})
 
 	t.Run("OutModule", func(t *testing.T) {
-		dir := filepath.Join(cwd, "..", "internal", "devpkg", "consts")
+		dir := filepath.Join(cwd, "..", "..", "..", "internal", "devpkg", "consts")
 		if _, err := os.Stat(dir); err != nil && os.IsNotExist(err) {
 			t.Skipf("skipping test because %s does not exist", dir)
 		}

@@ -16,7 +16,7 @@ import (
 	"github.com/xoctopus/x/syncx"
 	gopkg "golang.org/x/tools/go/packages"
 
-	"github.com/xoctopus/pkgx/internal"
+	internal "github.com/xoctopus/pkgx/internal/pkgx"
 )
 
 type (

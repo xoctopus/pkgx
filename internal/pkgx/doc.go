@@ -1,4 +1,4 @@
-package internal
+package pkgx
 
 import (
 	"fmt"
@@ -22,7 +22,7 @@ func ParseDocument(doc *ast.CommentGroup, comments ...*ast.CommentGroup) *Doc {
 		}
 	}
 	if len(docs) == 0 {
-		return EmptyDocument
+		return &Doc{tags: make(map[string][]string)}
 	}
 
 	docs = slicex.Unique(docs)
@@ -64,7 +64,7 @@ func ParseDocument(doc *ast.CommentGroup, comments ...*ast.CommentGroup) *Doc {
 		d.tags[k] = append(d.tags[k], v)
 	}
 	if len(d.desc) == 0 && len(d.tags) == 0 {
-		return EmptyDocument
+		return &Doc{tags: make(map[string][]string)}
 	}
 	for tag, vals := range d.tags {
 		trimmed := make([]string, 0, len(vals))
@@ -86,10 +86,6 @@ type Doc struct {
 	keys []string
 	desc []string
 	*ast.CommentGroup
-}
-
-var EmptyDocument = &Doc{
-	tags: make(map[string][]string),
 }
 
 func (d *Doc) Tags() map[string][]string {

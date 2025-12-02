@@ -1,4 +1,4 @@
-package internal
+package pkgx
 
 import (
 	"go/ast"

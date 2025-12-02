@@ -1,4 +1,4 @@
-package internal_test
+package pkgx_test
 
 import (
 	"fmt"
@@ -10,7 +10,7 @@ import (
 	"github.com/xoctopus/x/misc/must"
 	. "github.com/xoctopus/x/testx"
 
-	. "github.com/xoctopus/pkgx/internal"
+	. "github.com/xoctopus/pkgx/internal/pkgx"
 )
 
 func ExampleSourceOfNode() {

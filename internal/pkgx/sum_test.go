@@ -1,4 +1,4 @@
-package internal_test
+package pkgx_test
 
 import (
 	"os"
@@ -10,7 +10,7 @@ import (
 	. "github.com/xoctopus/x/testx"
 	gopkg "golang.org/x/tools/go/packages"
 
-	"github.com/xoctopus/pkgx/internal"
+	"github.com/xoctopus/pkgx/internal/pkgx"
 )
 
 var (
@@ -26,7 +26,7 @@ func init() {
 	cwd = filepath.Dir(filename)
 
 	pkgs, err := gopkg.Load(&gopkg.Config{
-		Dir:  filepath.Join(cwd, "..", "testdata"),
+		Dir:  filepath.Join(cwd, "..", "..", "testdata"),
 		Mode: gopkg.LoadMode(0b11111111111111111),
 	}, "github.com/xoctopus/pkgx/testdata")
 	must.NoError(err)
@@ -42,26 +42,26 @@ func init() {
 }
 
 func TestLoadSumFile(t *testing.T) {
-	filename := filepath.Join(cwd, "../testdata", internal.SumFilename)
+	filename := filepath.Join(cwd, "../../testdata", pkgx.SumFilename)
 	_ = os.RemoveAll(filename)
 
 	t.Run("NoModule", func(t *testing.T) {
-		Expect(t, internal.LoadSumFile(nil), BeNil[internal.Sum]())
+		Expect(t, pkgx.LoadSumFile(nil), BeNil[pkgx.Sum]())
 
 		pkgs, err := gopkg.Load(nil, "io")
 		Expect(t, err, BeNil[error]())
 		Expect(t, pkgs, HaveLen[[]*gopkg.Package](1))
-		Expect(t, internal.LoadSumFile(pkgs[0].Module), BeNil[internal.Sum]())
+		Expect(t, pkgx.LoadSumFile(pkgs[0].Module), BeNil[pkgx.Sum]())
 	})
 
 	path := "github.com/xoctopus/pkgx/testdata"
 	Expect(t, testdata.Module.Path, Equal(path))
 
 	t.Run("NoSumFile", func(t *testing.T) {
-		Expect(t, internal.LoadSumFile(testdata.Module), BeNil[internal.Sum]())
+		Expect(t, pkgx.LoadSumFile(testdata.Module), BeNil[pkgx.Sum]())
 	})
 
-	sum := internal.NewSum(testdata.Module.Dir)
+	sum := pkgx.NewSum(testdata.Module.Dir)
 	Expect(t, sum.Dir(), Equal(filepath.Dir(filename)))
 
 	t.Run("AddPackagesHashes", func(t *testing.T) {
@@ -77,8 +77,8 @@ func TestLoadSumFile(t *testing.T) {
 	t.Run("SaveAndLoad", func(t *testing.T) {
 		Expect(t, sum.Save(), Succeed())
 
-		sum2 := internal.LoadSumFile(testdata.Module)
-		Expect(t, sum2, NotBeNil[internal.Sum]())
+		sum2 := pkgx.LoadSumFile(testdata.Module)
+		Expect(t, sum2, NotBeNil[pkgx.Sum]())
 		Expect(t, sum2.Hash(testdata.ID), Equal(sum.Hash(testdata.ID)))
 		Expect(t, sum2.Hash(sub.ID), Equal(sum.Hash(sub.ID)))
 
