@@ -40,6 +40,7 @@ func TestNewPackage(t *testing.T) {
 	Expect(t, pkg.Unwrap().Name(), Equal("testdata"))
 	Expect(t, pkg.GoPackage().ID, Equal(testdata))
 	Expect(t, pkg.GoPackage().Name, Equal("testdata"))
+	Expect(t, pkg.Name(), Equal("testdata"))
 
 	Expect(t, pkg.GoModule().Path, Equal(testdata))
 	Expect(t, pkg.PackageByPath(sub).GoModule().Path, Equal(testdata))

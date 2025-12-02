@@ -14,15 +14,6 @@ import (
 	. "github.com/xoctopus/pkgx/pkg/pkgx"
 )
 
-type namer struct{}
-
-func (*namer) PackageName(p string) string {
-	if p == "io" {
-		return "std_io"
-	}
-	return p
-}
-
 func TestConfig(t *testing.T) {
 	ctx := context.Background()
 
@@ -33,16 +24,12 @@ func TestConfig(t *testing.T) {
 	Expect(t, defv.Logf, BeNil[func(string, ...any)]())
 	Expect(t, defv.Fset, BeNil[*token.FileSet]())
 
-	Expect(t, PackageName(ctx, Load(ctx, "io")), Equal("io"))
-	Expect(t, PackageName(ctx, Load(ctx, "bytes")), Equal("bytes"))
-
 	workdir := filepath.Join(os.Getenv("GOROOT"), "src")
 
 	ctx = contextx.Compose(
 		CtxWorkdir.Carry(workdir),
 		CtxLoadTests.Carry(true),
 		CtxLoadMode.Carry(LoadImports),
-		CtxPkgNamer.Carry(&namer{}),
 		CtxFileset.Carry(token.NewFileSet()),
 		CtxLogger.Carry(func(msg string, args ...any) { fmt.Printf(msg, args...) }),
 	)(ctx)
@@ -53,7 +40,4 @@ func TestConfig(t *testing.T) {
 	Expect(t, defv.Dir, Equal(workdir))
 	Expect(t, defv.Logf, NotBeNil[func(string, ...any)]())
 	Expect(t, defv.Fset, NotBeNil[*token.FileSet]())
-
-	Expect(t, PackageName(ctx, Load(ctx, "io")), Equal("std_io"))
-	Expect(t, PackageName(ctx, Load(ctx, "bytes")), Equal("bytes"))
 }
