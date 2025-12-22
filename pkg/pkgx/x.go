@@ -130,6 +130,15 @@ func (u *Packages) Modules(f func(string) bool) {
 	u.modules.Range(f)
 }
 
+func (u *Packages) DocOf(pos token.Pos) *Doc {
+	for _, p := range u.Packages {
+		if d := p.DocOf(pos); d != nil {
+			return d
+		}
+	}
+	return nil
+}
+
 type Package interface {
 	Path() string
 	ID() string
