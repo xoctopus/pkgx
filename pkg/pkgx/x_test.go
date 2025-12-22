@@ -221,6 +221,12 @@ func ExamplePackages() {
 		fmt.Println(path)
 	}
 
+	n := u.Package(testdata).TypeNames().ElementByName("Structure").Node()
+	fmt.Println("doc of Structure")
+	fmt.Println(u.DocOf(n.Pos()))
+	fmt.Println("empty doc of invalid position")
+	fmt.Println(u.DocOf(0))
+
 	// Output:
 	// imported in company:
 	// github.com/xoctopus/pkgx/testdata
@@ -230,6 +236,10 @@ func ExamplePackages() {
 	// github.com/xoctopus/pkgx/testdata/sub
 	// modules
 	// github.com/xoctopus/pkgx/testdata
+	// doc of Structure
+	// tags:[ignore:name] desc:[Structure is a struct type for testing][line1][line2]
+	// empty doc of invalid position
+	// <nil>
 }
 
 func TestWithWorkdir(t *testing.T) {

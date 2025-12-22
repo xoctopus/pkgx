@@ -61,7 +61,7 @@ const Multi1, Multi2 = 1, 2
 // line2
 // +ignore=name
 type Structure struct {
-	name   string
+	name   string // name comments
 	fieldX any
 }
 
