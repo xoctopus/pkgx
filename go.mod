@@ -4,7 +4,7 @@ go 1.25.4
 
 require (
 	github.com/xoctopus/pkgx/testdata v1.0.0
-	github.com/xoctopus/x v0.2.4
+	github.com/xoctopus/x v0.2.7
 )
 
 require (
