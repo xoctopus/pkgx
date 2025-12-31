@@ -10,7 +10,6 @@ import (
 	"maps"
 	"path/filepath"
 	"slices"
-	"strings"
 
 	"github.com/xoctopus/x/misc/must"
 	"github.com/xoctopus/x/ptrx"
@@ -237,9 +236,6 @@ func newx(p *gopkg.Package) Package {
 					methods[t] = append(methods[t], f)
 				}
 			case *ast.StructType:
-				if !strings.HasPrefix(p.PkgPath, "github.com/xoctopus/pkgx/testdata") {
-					return true
-				}
 				for _, f := range d.Fields.List {
 					doc := internal.ParseDocument(f.Doc, f.Comment)
 					if len(f.Names) == 0 {
