@@ -10,6 +10,7 @@ import (
 	"maps"
 	"path/filepath"
 	"slices"
+	"strings"
 
 	"github.com/xoctopus/x/misc/must"
 	"github.com/xoctopus/x/ptrx"
@@ -235,8 +236,36 @@ func newx(p *gopkg.Package) Package {
 					t := types.Unalias(internal.Deref(recv.Type()))
 					methods[t] = append(methods[t], f)
 				}
-			case *ast.Field:
-				x.docs.Store(d.Pos(), internal.ParseDocument(d.Doc, d.Comment))
+			case *ast.StructType:
+				if !strings.HasPrefix(p.PkgPath, "github.com/xoctopus/pkgx/testdata") {
+					return true
+				}
+				for _, f := range d.Fields.List {
+					doc := internal.ParseDocument(f.Doc, f.Comment)
+					if len(f.Names) == 0 {
+						pos := token.NoPos
+						exp := f.Type
+						for pos == token.NoPos {
+							switch u := exp.(type) {
+							case *ast.Ident:
+								pos = u.Pos()
+							case *ast.SelectorExpr:
+								pos = u.Sel.Pos()
+							case *ast.StarExpr:
+								exp = u.X
+							case *ast.IndexExpr:
+								exp = u.X
+							default:
+								_, ok := u.(*ast.IndexListExpr)
+								must.BeTrueF(ok, "unexpected ast type as struct field: %T", u)
+								exp = u.(*ast.IndexListExpr).X
+							}
+						}
+						x.docs.Store(pos, doc)
+					} else {
+						x.docs.Store(f.Pos(), doc)
+					}
+				}
 			}
 			return true
 		})

@@ -15,3 +15,15 @@ func Curry() func() string {
 		return ""
 	}
 }
+
+type AsSel struct{}
+
+type AsSelPtr struct{}
+
+type AsIndex[V any] struct{}
+
+type AsIndexPtr[V any] struct{}
+
+type AsIndexList[V any, K any] struct{}
+
+type AsIndexListPtr[V any, K any] struct{}

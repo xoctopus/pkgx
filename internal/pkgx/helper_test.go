@@ -42,13 +42,13 @@ func ExampleSourceOfNode() {
 
 	// Output:
 	// IntConstType int	// this is an inline comment
-	// pos: documents.go:18:6
-	// end: documents.go:18:22
+	// pos: documents.go:20:6
+	// end: documents.go:20:22
 	//
 	// // IntConstTypeValue1 doc
 	// IntConstTypeValue1 IntConstType = iota + 1	// comment 1
-	// pos: documents.go:22:2
-	// end: documents.go:22:44
+	// pos: documents.go:24:2
+	// end: documents.go:24:44
 	//
 	// // TypeA doc
 	// // line1
@@ -56,8 +56,8 @@ func ExampleSourceOfNode() {
 	// // +tag1=val1_1
 	// // +tag1=val1_2
 	// TypeA int
-	// pos: documents.go:36:2
-	// end: documents.go:36:11
+	// pos: documents.go:38:2
+	// end: documents.go:38:11
 	//
 	// // TypeB doc
 	// // line1
@@ -65,8 +65,8 @@ func ExampleSourceOfNode() {
 	// // +tag1=val1_1
 	// // +tag1=val1_2
 	// TypeB string
-	// pos: documents.go:42:2
-	// end: documents.go:42:14
+	// pos: documents.go:44:2
+	// end: documents.go:44:14
 }
 
 func TestDeref(t *testing.T) {

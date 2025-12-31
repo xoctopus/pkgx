@@ -169,6 +169,8 @@ func ExamplePackage_TypeNames() {
 	// tags: desc:[type specs][Float alias of float64]
 	// Float
 	//
+	// tags: desc:[EachFieldHasComment for field document]
+	// EachFieldHasComment
 }
 
 func ExamplePackage_Functions() {
@@ -270,4 +272,15 @@ func TestWithWorkdir(t *testing.T) {
 		o := p.Unwrap().Scope().Lookup("DoNotDelete")
 		Expect(t, o, NotBeNil[types.Object]())
 	})
+}
+
+func TestStructFieldDoc(t *testing.T) {
+	x := pkg.TypeNames().ElementByName("EachFieldHasComment")
+
+	for f := range x.Type().Underlying().(*types.Struct).Fields() {
+		doc := pkg.DocOf(f.Pos())
+		Expect(t, doc, NotBeNil[*Doc]())
+		Expect(t, len(doc.Desc()) > 0, BeTrue())
+		Expect(t, doc.Desc()[0], Equal(f.Name()))
+	}
 }

@@ -3,6 +3,8 @@
 // comments for testdata package
 package testdata
 
+import "github.com/xoctopus/pkgx/testdata/sub"
+
 /*
 IntConstType defines a named constant type with integer underlying in a single `GenDecl`
 line1
@@ -89,3 +91,23 @@ type (
 	// Float alias of float64
 	Float = float64
 )
+
+// EachFieldHasComment for field document
+type EachFieldHasComment struct {
+	// Name
+	Name string
+	// Structure
+	Structure
+	// AsSel
+	sub.AsSel
+	// AsSelPtr
+	*sub.AsSelPtr
+	// AsIndex
+	sub.AsIndex[any]
+	// AsIndexPtr
+	*sub.AsIndexPtr[any]
+	// AsIndexList
+	sub.AsIndexList[any, any]
+	// AsIndexListPtr
+	*sub.AsIndexListPtr[any, any]
+}
