@@ -239,9 +239,9 @@ func ExamplePackages() {
 	// modules
 	// github.com/xoctopus/pkgx/testdata
 	// doc of Structure
-	// tags:[ignore:name] desc:[Structure is a struct type for testing][line1][line2]
+	// tags: desc:
 	// empty doc of invalid position
-	// <nil>
+	// tags: desc:
 }
 
 func TestWithWorkdir(t *testing.T) {

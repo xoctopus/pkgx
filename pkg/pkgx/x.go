@@ -323,12 +323,17 @@ func (x *xpkg) GoModule() *gopkg.Module {
 }
 
 func (x *xpkg) Doc() *Doc {
-	return x.doc
+	if x.doc != nil {
+		return x.doc
+	}
+	return internal.DefaultDoc
 }
 
 func (x *xpkg) DocOf(pos token.Pos) *Doc {
-	d, _ := x.docs.Load(pos)
-	return d
+	if d, _ := x.docs.Load(pos); d != nil {
+		return d
+	}
+	return internal.DefaultDoc
 }
 
 func (x *xpkg) PackageByPath(path string) Package {
