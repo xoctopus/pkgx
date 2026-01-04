@@ -82,6 +82,8 @@ func ParseDocument(doc *ast.CommentGroup, comments ...*ast.CommentGroup) *Doc {
 	return d
 }
 
+var DefaultDoc = &Doc{tags: make(map[string][]string), CommentGroup: &ast.CommentGroup{}}
+
 type Doc struct {
 	tags map[string][]string
 	keys []string // sorted

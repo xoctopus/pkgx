@@ -132,7 +132,10 @@ lint: dep
 # @gocyclo -over 10 -avg -ignore '_test|_test.go|vendor|pb' . || true
 #@echo "done"
 
-pre-commit: dep update lint fmt view-cover
+chglog:
+	git chglog -o CHANGELOG.md
+
+pre-commit: dep update lint fmt view-cover chglog
 
 clean:
 	@find . -name cover.out | xargs rm -rf
