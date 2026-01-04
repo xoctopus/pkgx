@@ -1,4 +1,14 @@
 
+<a name="v0.1.9"></a>
+## [v0.1.9](https://github.com/xoctopus/x/compare/v0.1.8...v0.1.9)
+
+> 2026-01-04
+
+### Fix
+
+* **pkgx:** return DefaultDoc if empty
+
+
 <a name="v0.1.8"></a>
 ## [v0.1.8](https://github.com/xoctopus/x/compare/v0.1.7...v0.1.8)
 

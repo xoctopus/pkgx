@@ -269,6 +269,8 @@ func newx(p *gopkg.Package) Package {
 
 	if len(docs) > 0 {
 		x.doc = internal.ParseDocument(docs[0], docs[1:]...)
+	} else {
+		x.doc = internal.DefaultDoc
 	}
 
 	typenames := x.typenames.(internal.ObjectsManager[*types.TypeName, *TypeName])
@@ -323,17 +325,12 @@ func (x *xpkg) GoModule() *gopkg.Module {
 }
 
 func (x *xpkg) Doc() *Doc {
-	if x.doc != nil {
-		return x.doc
-	}
-	return internal.DefaultDoc
+	return x.doc
 }
 
 func (x *xpkg) DocOf(pos token.Pos) *Doc {
-	if d, _ := x.docs.Load(pos); d != nil {
-		return d
-	}
-	return internal.DefaultDoc
+	d, _ := x.docs.Load(pos)
+	return d
 }
 
 func (x *xpkg) PackageByPath(path string) Package {
