@@ -1,4 +1,14 @@
 
+<a name="v0.1.10"></a>
+## [v0.1.10](https://github.com/xoctopus/x/compare/v0.1.9...v0.1.10)
+
+> 2026-01-04
+
+### Fix
+
+* **pkgx:** p.Doc/DocOf and u.DocOf
+
+
 <a name="v0.1.9"></a>
 ## [v0.1.9](https://github.com/xoctopus/x/compare/v0.1.8...v0.1.9)
 
