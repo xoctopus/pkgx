@@ -1,4 +1,20 @@
 
+<a name="HEAD"></a>
+## [HEAD](https://github.com/xoctopus/x/compare/v0.1.10...HEAD)
+
+> 2026-02-10
+
+### Chore
+
+* format config and regen
+* **deps:** bump dependencies
+* **deps:** bump github.com/xoctopus/x from 0.2.11 to 0.3.0
+* **deps:** bump actions/checkout from 4 to 6 ([#1](https://github.com/xoctopus/x/issues/1))
+* **deps:** bump actions/setup-go from 5 to 6 ([#2](https://github.com/xoctopus/x/issues/2))
+* **deps:** bump codecov/codecov-action from 4 to 5 ([#3](https://github.com/xoctopus/x/issues/3))
+* **deps:** bump github.com/xoctopus/x from 0.2.10 to 0.2.11 ([#4](https://github.com/xoctopus/x/issues/4))
+
+
 <a name="v0.1.10"></a>
 ## [v0.1.10](https://github.com/xoctopus/x/compare/v0.1.9...v0.1.10)
 
