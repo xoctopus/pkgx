@@ -1,12 +1,20 @@
 
 <a name="HEAD"></a>
-## [HEAD](https://github.com/xoctopus/x/compare/v0.1.10...HEAD)
+## [HEAD](https://github.com/xoctopus/x/compare/v0.4.0...HEAD)
 
-> 2026-02-10
+> 0001-01-01
+
+
+<a name="v0.4.0"></a>
+## [v0.4.0](https://github.com/xoctopus/x/compare/v0.1.10...v0.4.0)
+
+> 2026-03-08
 
 ### Chore
 
 * format config and regen
+* **deps:** bump xoctopus/x to v0.4.0
+* **deps:** bump go1.26
 * **deps:** bump dependencies
 * **deps:** bump github.com/xoctopus/x from 0.2.11 to 0.3.0
 * **deps:** bump actions/checkout from 4 to 6 ([#1](https://github.com/xoctopus/x/issues/1))
