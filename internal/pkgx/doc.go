@@ -36,7 +36,7 @@ func ParseDocument(doc *ast.CommentGroup, comments ...*ast.CommentGroup) *Doc {
 
 	text := make([]string, 0, len(docs))
 	for _, c := range docs {
-		for _, line := range strings.Split(c.Text, "\n") {
+		for line := range strings.SplitSeq(c.Text, "\n") {
 			line = strings.TrimPrefix(line, "/*")
 			line = strings.TrimPrefix(line, "//")
 			line = strings.TrimSuffix(line, "*/")
@@ -54,11 +54,11 @@ func ParseDocument(doc *ast.CommentGroup, comments ...*ast.CommentGroup) *Doc {
 		}
 		line = line[1:]
 		k, v := "", ""
-		if idx := strings.Index(line, "="); idx == -1 {
+		if before, after, ok := strings.Cut(line, "="); !ok {
 			k = line
 		} else {
-			k = strings.TrimSpace(line[:idx])
-			v = strings.TrimSpace(line[idx+1:])
+			k = strings.TrimSpace(before)
+			v = strings.TrimSpace(after)
 		}
 		d.tags[k] = append(d.tags[k], v)
 	}
