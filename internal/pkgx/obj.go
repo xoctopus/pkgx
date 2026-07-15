@@ -7,6 +7,7 @@ import (
 	"iter"
 	"sort"
 
+	"github.com/xoctopus/x/docx/v2"
 	"github.com/xoctopus/x/syncx"
 )
 
@@ -22,20 +23,20 @@ type Object[U Exposer] interface {
 	Name() string
 	Node() ast.Node
 	Ident() *ast.Ident
-	Doc() *Doc
+	Doc() *docx.Meta
 	Type() types.Type
 	TypeName() string
 }
 
-func NewObject[U Exposer](n ast.Node, i *ast.Ident, obj U, c *Doc) Object[U] {
-	return &object[U]{node: n, id: i, u: obj, doc: c}
+func NewObject[U Exposer](n ast.Node, i *ast.Ident, obj U, d *docx.Meta) Object[U] {
+	return &object[U]{node: n, id: i, u: obj, doc: d}
 }
 
 type object[U Exposer] struct {
 	u    U
 	node ast.Node
 	id   *ast.Ident
-	doc  *Doc
+	doc  *docx.Meta
 }
 
 func (o *object[U]) IsNil() bool {
@@ -61,7 +62,7 @@ func (o *object[U]) Exposer() U {
 	return o.u
 }
 
-func (o *object[U]) Doc() *Doc {
+func (o *object[U]) Doc() *docx.Meta {
 	return o.doc
 }
 
@@ -96,13 +97,15 @@ type Objects[U Exposer, V Object[U]] interface {
 	ElementByName(string) V
 }
 
-type ObjectsManager[U Exposer, V Object[U]] interface {
+type MutationObjects[U Exposer, V Object[U]] interface {
+	Objects[U, V]
+
 	Add(...V)
 	Init(*token.FileSet)
 	RangeNodes(func(Node, V) bool)
 }
 
-func NewObjects[U Exposer, V Object[U]]() Objects[U, V] {
+func NewMutationObjects[U Exposer, V Object[U]]() MutationObjects[U, V] {
 	return &objects[U, V]{set: syncx.NewXmap[Node, V]()}
 }
 

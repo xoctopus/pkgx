@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/xoctopus/x/contextx"
+	"github.com/xoctopus/x/docx/v2"
 	. "github.com/xoctopus/x/testx"
 
 	. "github.com/xoctopus/pkgx/pkg/pkgx"
@@ -49,7 +50,15 @@ func TestNewPackage(t *testing.T) {
 		Expect(t, pkg.ID(), Equal(testdata))
 		_ = pkg.Files()
 		_ = pkg.FileSet()
-		_ = pkg.Doc()
+		Expect(t, pkg.PackageDoc().Lines(), Equal([]string{
+			"Package testdata contains testdata for pkgx.",
+			"package desc following here",
+		}))
+		Expect(t, pkg.PackageDoc().Directives(), Equal([]string{
+			"+genx:enum",
+			"+genx:apis",
+			"+genx:model",
+		}))
 	})
 
 	t.Run("DifferentPathAndID", func(t *testing.T) {
@@ -77,7 +86,8 @@ func TestNewPackage(t *testing.T) {
 		n := pkg.TypeNames().ElementByName("TypeA")
 		f := pkg.Functions().ElementByName("F")
 
-		Expect(t, pkg.DocOf(n.Node().Pos()), NotBeNil[*Doc]())
+		Expect(t, pkg.FieldDoc("Structure", "name").Lines(), Equal([]string{"name comments"}))
+		Expect(t, pkg.FieldDoc("Structure", ""), BeNil[*docx.Meta]())
 		Expect(t, pkg.Position(f.Node().Pos()).String(), Equal(filepath.Join(dir, "functions.go:22:1")))
 		Expect(t, pkg.ObjectOf(f.Ident()).Name(), Equal("F"))
 
@@ -96,34 +106,43 @@ func TestNewPackage(t *testing.T) {
 
 func ExamplePackage_Constants() {
 	for e := range pkg.Constants().Elements() {
-		fmt.Println(e.Doc())
+		fmt.Println(e.Name())
+		fmt.Println(e.Doc().Lines())
 		fmt.Printf("%s = %v\n", e.Name(), e.Value())
 	}
 
 	// Output:
-	// tags: desc:[IntConstTypeValue1 doc][comment 1]
+	// IntConstTypeValue1
+	// [IntConstTypeValue1 doc comment 1]
 	// IntConstTypeValue1 = 1
-	// tags: desc:[IntConstTypeValue2 doc][comment 2]
+	// IntConstTypeValue2
+	// [IntConstTypeValue2 doc comment 2]
 	// IntConstTypeValue2 = 2
-	// tags: desc:[placeholder]
-	// _ = 3
-	// tags: desc:[comment 3]
+	// IntConstTypeValue3
+	// [comment 3]
 	// IntConstTypeValue3 = 4
-	// tags: desc:
+	// INT_STRING_ENUM__UNKNOWN
+	// []
 	// INT_STRING_ENUM__UNKNOWN = 0
-	// tags: desc:[INT_STRING_ENUM_A has doc A]
+	// INT_STRING_ENUM_A
+	// [INT_STRING_ENUM_A has doc A]
 	// INT_STRING_ENUM_A = 1
-	// tags: desc:[has comment B]
+	// INT_STRING_ENUM_B
+	// [has comment B]
 	// INT_STRING_ENUM_B = 2
-	// tags: desc:
+	// INT_STRING_ENUM_C
+	// []
 	// INT_STRING_ENUM_C = 3
-	// tags: desc:[multi ident will skip extract documents and nodes]
+	// Multi1
+	// [multi ident will skip extract documents and nodes]
 	// Multi1 = 1
 }
 
 func ExamplePackage_TypeNames() {
 	for o := range pkg.TypeNames().Elements() {
-		fmt.Println(o.Doc())
+		fmt.Println(o.Name())
+		fmt.Println(o.Doc().Lines())
+
 		fmt.Println(o.Ident().Name)
 		methods := o.Methods().Keys()
 		sort.Strings(methods)
@@ -139,52 +158,64 @@ func ExamplePackage_TypeNames() {
 	}
 
 	// Output:
-	// tags:[key1:val_key1_1,val_key1_2][key2:val_key2][key3][key4:val_key4] desc:[IntConstType defines a named constant type with integer underlying in a single `GenDecl`][line1][line2][this is an inline comment]
+	// IntConstType
+	// [IntConstType defines a named constant type with integer underlying in a single `GenDecl` line1 line2 this is an inline comment]
 	// IntConstType
 	//
-	// tags:[tag1:val1_1,val1_2] desc:[GenDecl defines 2 type, TypeA and TypeB][TypeA doc][line1][line2]
+	// TypeA
+	// [GenDecl defines 2 type, TypeA and TypeB TypeA doc line1 line2]
 	// TypeA
 	//
-	// tags:[tag1:val1_1,val1_2] desc:[GenDecl defines 2 type, TypeA and TypeB][TypeB doc][line1][line2]
+	// TypeB
+	// [GenDecl defines 2 type, TypeA and TypeB TypeB doc line1 line2]
 	// TypeB
 	//
-	// tags: desc:[IntStringEnum defines a named constant type with integer underlying as an enum type]
+	// IntStringEnum
+	// [IntStringEnum defines a named constant type with integer underlying as an enum type]
 	// IntStringEnum
 	//
-	// tags:[ignore:name] desc:[Structure is a struct type for testing][line1][line2]
+	// Structure
+	// [Structure is a struct type for testing line1 line2]
 	// Structure
 	// *Structure.Name: func() string
 	// Structure.String: func() string
 	// Structure.Value: func() any
 	//
-	// tags: desc:[StructureAlias is an alias of Structure for testing]
+	// StructureAlias
+	// [StructureAlias is an alias of Structure for testing]
 	// StructureAlias
 	//
-	// tags: desc:[type specs][Int redefines int]
+	// Int
+	// [type specs Int redefines int]
 	// Int
 	//
-	// tags: desc:[type specs][String redefines string]
+	// String
+	// [type specs String redefines string]
 	// String
 	//
-	// tags: desc:[type specs][Float alias of float64]
+	// Float
+	// [type specs Float alias of float64]
 	// Float
 	//
-	// tags: desc:[EachFieldHasComment for field document]
+	// EachFieldHasComment
+	// [EachFieldHasComment for field document]
 	// EachFieldHasComment
 }
 
 func ExamplePackage_Functions() {
 	for o := range pkg.Functions().Elements() {
-		fmt.Println(o.Doc())
-		fmt.Printf("%s %s\n\n", o.Ident().Name, o.Type())
+		fmt.Println(o.Ident().Name)
+		fmt.Println(o.Type())
+		fmt.Println(o.Doc().Lines())
 	}
 
 	// Output:
-	// tags: desc:[Curry function]
-	// Curry func() func() int
-	//
-	// tags: desc:[F a function list call expressions]
-	// F func()
+	// Curry
+	// func() func() int
+	// [Curry function]
+	// F
+	// func()
+	// [F a function list call expressions]
 }
 
 func ExamplePackages() {
@@ -223,12 +254,6 @@ func ExamplePackages() {
 		fmt.Println(path)
 	}
 
-	n := u.Package(testdata).TypeNames().ElementByName("Structure").Node()
-	fmt.Println("doc of Structure")
-	fmt.Println(u.DocOf(n.Pos()))
-	fmt.Println("empty doc of invalid position")
-	fmt.Println(u.DocOf(0))
-
 	// Output:
 	// imported in company:
 	// github.com/xoctopus/pkgx/testdata
@@ -238,10 +263,6 @@ func ExamplePackages() {
 	// github.com/xoctopus/pkgx/testdata/sub
 	// modules
 	// github.com/xoctopus/pkgx/testdata
-	// doc of Structure
-	// tags:[ignore:name] desc:[Structure is a struct type for testing][line1][line2]
-	// empty doc of invalid position
-	// <nil>
 }
 
 func TestWithWorkdir(t *testing.T) {
@@ -272,15 +293,4 @@ func TestWithWorkdir(t *testing.T) {
 		o := p.Unwrap().Scope().Lookup("DoNotDelete")
 		Expect(t, o, NotBeNil[types.Object]())
 	})
-}
-
-func TestStructFieldDoc(t *testing.T) {
-	x := pkg.TypeNames().ElementByName("EachFieldHasComment")
-
-	for f := range x.Type().Underlying().(*types.Struct).Fields() {
-		doc := pkg.DocOf(f.Pos())
-		Expect(t, doc, NotBeNil[*Doc]())
-		Expect(t, len(doc.Desc()) > 0, BeTrue())
-		Expect(t, doc.Desc()[0], Equal(f.Name()))
-	}
 }

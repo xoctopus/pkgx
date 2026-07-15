@@ -6,6 +6,7 @@ import (
 	"go/types"
 	"testing"
 
+	"github.com/xoctopus/x/docx/v2"
 	. "github.com/xoctopus/x/testx"
 
 	pkgi "github.com/xoctopus/pkgx/internal/pkgx"
@@ -29,7 +30,7 @@ func TestNewObject(t *testing.T) {
 		Expect(t, o.Name(), HaveLen[string](0))
 		Expect(t, o.Ident(), BeNil[*ast.Ident]())
 		Expect(t, o.Exposer(), BeNil[*types.Func]())
-		Expect(t, o.Doc(), BeNil[*pkgi.Doc]())
+		Expect(t, o.Doc(), BeNil[*docx.Meta]())
 		Expect(t, o.Type(), BeNil[types.Type]())
 		Expect(t, o.TypeName(), HaveLen[string](0))
 	})
@@ -59,6 +60,7 @@ func TestObject(t *testing.T) {
 	Expect(t, c.TypeName(), Equal("IntConstType"))
 	Expect(t, f.TypeName(), Equal(""))
 	Expect(t, n.TypeName(), Equal("Structure"))
+	Expect(t, pkg.FieldDoc("Structure", "name").Lines(), Equal([]string{"name comments"}))
 
 	Expect(t, functions.Len(), Equal(2))
 
@@ -72,7 +74,7 @@ func TestObject(t *testing.T) {
 		}
 	}
 
-	functions.(pkgi.ObjectsManager[*types.Func, *pkgi.Function]).
+	functions.(pkgi.MutationObjects[*types.Func, *pkgi.Function]).
 		Add(&pkgi.Function{Object: pkgi.NewObject(nil, nil, &types.Func{}, nil)})
 	Expect(t, functions.Len(), Equal(2))
 
