@@ -107,4 +107,6 @@ type EachFieldHasComment struct {
 	sub.AsIndexList[any, any]
 	// AsIndexListPtr
 	*sub.AsIndexListPtr[any, any]
+	// _ skip unnamed field
+	_ any
 }
