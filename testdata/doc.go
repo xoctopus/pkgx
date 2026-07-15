@@ -1,4 +1,5 @@
 // Package testdata contains testdata for pkgx.
+//
 // package desc following here
 // +genx:enum
 // +genx:apis

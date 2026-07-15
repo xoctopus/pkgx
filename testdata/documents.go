@@ -1,6 +1,3 @@
-// Package testdata package level document
-//
-// comments for testdata package
 package testdata
 
 import "github.com/xoctopus/pkgx/testdata/sub"
