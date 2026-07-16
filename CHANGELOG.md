@@ -1,8 +1,28 @@
 
 <a name="HEAD"></a>
-## [HEAD](https://github.com/xoctopus/x/compare/testdata/v1.0.3...HEAD)
+## [HEAD](https://github.com/xoctopus/x/compare/testdata/v1.0.4...HEAD)
 
 > 0001-01-01
+
+
+<a name="testdata/v1.0.4"></a>
+## [testdata/v1.0.4](https://github.com/xoctopus/x/compare/v0.4.1...testdata/v1.0.4)
+
+> 2026-07-16
+
+### Feat
+
+* **testdata:** v4
+
+
+<a name="v0.4.1"></a>
+## [v0.4.1](https://github.com/xoctopus/x/compare/testdata/v1.0.3...v0.4.1)
+
+> 2026-07-15
+
+### Feat
+
+* **pkgx:** scan documents use docx/v2
 
 
 <a name="testdata/v1.0.3"></a>

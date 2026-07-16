@@ -87,7 +87,7 @@ func TestNewPackage(t *testing.T) {
 		f := pkg.Functions().ElementByName("F")
 
 		Expect(t, pkg.FieldDoc("Structure", "name").Lines(), Equal([]string{"name comments"}))
-		Expect(t, pkg.FieldDoc("Structure", ""), BeNil[*docx.Meta]())
+		Expect(t, pkg.FieldDoc("_", ""), BeNil[*docx.Meta]())
 		Expect(t, pkg.Position(f.Node().Pos()).String(), Equal(filepath.Join(dir, "functions.go:22:1")))
 		Expect(t, pkg.ObjectOf(f.Ident()).Name(), Equal("F"))
 

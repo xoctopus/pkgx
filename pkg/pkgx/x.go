@@ -176,88 +176,6 @@ func newx(p *gopkg.Package) Package {
 	docs := make([]*ast.CommentGroup, len(p.Syntax))
 
 	for _, file := range p.Syntax {
-		/*
-			if file.Doc != nil {
-				docs = append(docs, file.Doc)
-			}
-			ast.Inspect(file, func(node ast.Node) bool {
-				switch d := node.(type) {
-				case *ast.GenDecl:
-					if d.Tok != token.TYPE && d.Tok != token.CONST {
-						return true
-					}
-					for _, spec := range d.Specs {
-						switch s := spec.(type) {
-						case *ast.ValueSpec:
-							doc := internal.ParseDocument(d.Doc, s.Doc, s.Comment)
-							x.docs.Store(s.Pos(), doc)
-							for _, ident := range s.Names {
-								x.constants.Add(&Constant{
-									Object: internal.NewObject(
-										s,
-										ident,
-										p.TypesInfo.Defs[ident].(*types.Const),
-										doc,
-									),
-								})
-								x.docs.Store(ident.Pos(), doc)
-							}
-						case *ast.TypeSpec:
-							doc := internal.ParseDocument(d.Doc, s.Doc, s.Comment)
-							x.docs.Store(s.Pos(), doc)
-							x.typenames.Add(internal.NewTypeName(
-								internal.NewObject(
-									s,
-									s.Name,
-									p.TypesInfo.Defs[s.Name].(*types.TypeName),
-									doc,
-								),
-							))
-						}
-					}
-				case *ast.FuncDecl:
-					doc := internal.ParseDocument(d.Doc)
-					u := p.TypesInfo.Defs[d.Name].(*types.Func)
-					o := internal.NewObject(node, d.Name, u, doc)
-					f := &internal.Function{Object: o}
-					if recv := u.Signature().Recv(); recv == nil {
-						x.functions.Add(f)
-					} else {
-						t := types.Unalias(internal.Deref(recv.Type()))
-						methods[t] = append(methods[t], f)
-					}
-				case *ast.StructType:
-					for _, f := range d.Fields.List {
-						doc := internal.ParseDocument(f.Doc, f.Comment)
-						if len(f.Names) == 0 {
-							pos := token.NoPos
-							exp := f.Type
-							for pos == token.NoPos {
-								switch u := exp.(type) {
-								case *ast.Ident:
-									pos = u.Pos()
-								case *ast.SelectorExpr:
-									pos = u.Sel.Pos()
-								case *ast.StarExpr:
-									exp = u.X
-								case *ast.IndexExpr:
-									exp = u.X
-								default:
-									_, ok := u.(*ast.IndexListExpr)
-									must.BeTrueF(ok, "unexpected ast type as struct field: %T", u)
-									exp = u.(*ast.IndexListExpr).X
-								}
-							}
-							x.docs.Store(pos, doc)
-						} else {
-							x.docs.Store(f.Pos(), doc)
-						}
-					}
-				}
-				return true
-			})
-		*/
-
 		ast.Inspect(file, func(node ast.Node) bool {
 			switch n := node.(type) {
 			case *ast.File:
@@ -274,8 +192,34 @@ func newx(p *gopkg.Package) Package {
 							fieldsDoc = make(map[string]*docx.Meta)
 							for _, f := range st.Fields.List {
 								d := docx.ParseDocumentFromComments(f.Doc, f.Comment)
-								for _, ident := range f.Names {
-									if name := ident.String(); name != "_" {
+								if len(f.Names) > 0 {
+									for _, ident := range f.Names {
+										if name := ident.String(); name != "_" {
+											fieldsDoc[name] = d
+										}
+									}
+								} else {
+									name := ""
+									typ := f.Type
+									if xt, ok := typ.(*ast.StarExpr); ok {
+										typ = xt.X
+									}
+
+									switch xt := typ.(type) {
+									case *ast.IndexExpr:
+										typ = xt.X
+									case *ast.IndexListExpr:
+										typ = xt.X
+									}
+
+									switch t := typ.(type) {
+									case *ast.Ident:
+										name = t.Name
+									case *ast.SelectorExpr:
+										name = t.Sel.Name
+									}
+
+									if len(name) > 0 && name != "_" {
 										fieldsDoc[name] = d
 									}
 								}

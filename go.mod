@@ -3,7 +3,7 @@ module github.com/xoctopus/pkgx
 go 1.26.5
 
 require (
-	github.com/xoctopus/pkgx/testdata v1.0.3
+	github.com/xoctopus/pkgx/testdata v1.0.4
 	github.com/xoctopus/x v0.5.2
 )
 
