@@ -77,3 +77,20 @@ func TestParseDocument(t *testing.T) {
 		).String(), Equal("tags: desc:"))
 	})
 }
+
+func TestExtractDocuments(t *testing.T) {
+	lines := pkgx.ExtractComments(
+		&ast.CommentGroup{
+			List: []*ast.Comment{
+				{Text: "//line1\n//line2"},
+				{Text: "/*line3\nline4\n*/"},
+			},
+		},
+	)
+	Expect(t, lines, Equal([]string{
+		"line1",
+		"line2",
+		"line3",
+		"line4",
+	}))
+}

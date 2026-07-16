@@ -3,7 +3,6 @@ package pkgx
 import (
 	"go/types"
 
-	"github.com/xoctopus/x/docx/v2"
 	"github.com/xoctopus/x/syncx"
 )
 
@@ -17,7 +16,7 @@ func NewTypeName(obj Object[*types.TypeName]) *TypeName {
 type TypeName struct {
 	Object[*types.TypeName]
 	methods syncx.Map[string, *Function]
-	docs    map[string]*docx.Meta
+	docs    map[string][]string
 }
 
 func (t *TypeName) Methods() syncx.Map[string, *Function] {
@@ -35,10 +34,10 @@ func (t *TypeName) Method(name string) *Function {
 	return f
 }
 
-func (t *TypeName) SetFieldDocs(docs map[string]*docx.Meta) {
+func (t *TypeName) SetFieldDocs(docs map[string][]string) {
 	t.docs = docs
 }
 
-func (t *TypeName) GetFieldDocByName(name string) *docx.Meta {
+func (t *TypeName) GetFieldDocByName(name string) []string {
 	return t.docs[name]
 }

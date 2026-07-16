@@ -11,7 +11,6 @@ import (
 	"path/filepath"
 	"slices"
 
-	"github.com/xoctopus/x/docx/v2"
 	"github.com/xoctopus/x/misc/must"
 	"github.com/xoctopus/x/syncx"
 	gopkg "golang.org/x/tools/go/packages"
@@ -132,6 +131,15 @@ func (u *Packages) Modules(f func(string) bool) {
 	u.modules.Range(f)
 }
 
+func (u *Packages) DocByPos(pos token.Pos) []string {
+	for _, p := range u.Packages {
+		if d := p.DocByPos(pos); d != nil {
+			return d
+		}
+	}
+	return nil
+}
+
 type Package interface {
 	Path() string
 	ID() string
@@ -146,11 +154,13 @@ type Package interface {
 	// PackageByPath locates package of given path
 	PackageByPath(string) Package
 	// PackageDoc returns package level documents
-	PackageDoc() *docx.Meta
+	PackageDoc() []string
+	// DocByPos return documents by pos
+	DocByPos(token.Pos) []string
 	// SourceDir returns dir path of current package
 	SourceDir() string
 	// FieldDoc returns document of field in typename
-	FieldDoc(typename string, fieldname string) *docx.Meta
+	FieldDoc(typename string, field string) []string
 
 	Eval(ast.Expr) (types.TypeAndValue, error)
 	Files() []*ast.File
@@ -171,15 +181,17 @@ func newx(p *gopkg.Package) Package {
 		typenames: internal.NewMutationObjects[*types.TypeName, *TypeName](),
 		constants: internal.NewMutationObjects[*types.Const, *Constant](),
 		functions: internal.NewMutationObjects[*types.Func, *Function](),
+
+		docs: syncx.NewXmap[token.Pos, []string](),
 	}
 	methods := make(map[types.Type][]*Function)
-	docs := make([]*ast.CommentGroup, len(p.Syntax))
 
 	for _, file := range p.Syntax {
 		ast.Inspect(file, func(node ast.Node) bool {
 			switch n := node.(type) {
 			case *ast.File:
-				docs = append(docs, n.Doc)
+				x.doc = append(x.doc, internal.ExtractComments(n.Doc)...)
+				// x.doc = append(x.doc, internal.ExtractComments(n.Comments...)...)
 			case *ast.GenDecl:
 				for _, spec := range n.Specs {
 					switch s := spec.(type) {
@@ -187,11 +199,11 @@ func newx(p *gopkg.Package) Package {
 						if s.Name.Name == "_" {
 							continue
 						}
-						var fieldsDoc map[string]*docx.Meta
+						var fieldsDoc map[string][]string
 						if st, ok := s.Type.(*ast.StructType); ok {
-							fieldsDoc = make(map[string]*docx.Meta)
+							fieldsDoc = make(map[string][]string)
 							for _, f := range st.Fields.List {
-								d := docx.ParseDocumentFromComments(f.Doc, f.Comment)
+								d := internal.ExtractComments(f.Doc, f.Comment)
 								if len(f.Names) > 0 {
 									for _, ident := range f.Names {
 										if name := ident.String(); name != "_" {
@@ -225,16 +237,17 @@ func newx(p *gopkg.Package) Package {
 								}
 							}
 						}
-						d := docx.ParseDocumentFromComments(n.Doc, s.Doc, s.Comment)
+						d := internal.ExtractComments(n.Doc, s.Doc, s.Comment)
 						u := p.TypesInfo.Defs[s.Name].(*types.TypeName)
 						o := internal.NewTypeName(internal.NewObject(s, s.Name, u, d))
 						o.SetFieldDocs(fieldsDoc)
 						x.typenames.Add(o)
+						x.docs.Store(s.Pos(), d)
 					case *ast.ValueSpec:
 						if n.Tok != token.CONST {
 							continue
 						}
-						d := docx.ParseDocumentFromComments(n.Doc, s.Doc, s.Comment)
+						d := internal.ExtractComments(n.Doc, s.Doc, s.Comment)
 						ident := s.Names[0]
 						if ident.Name == "_" {
 							continue
@@ -242,10 +255,11 @@ func newx(p *gopkg.Package) Package {
 						u := p.TypesInfo.Defs[ident].(*types.Const)
 						o := &Constant{Object: internal.NewObject(s, ident, u, d)}
 						x.constants.Add(o)
+						x.docs.Store(ident.Pos(), d)
 					}
 				}
 			case *ast.FuncDecl:
-				d := docx.ParseDocumentFromComments(n.Doc)
+				d := internal.ExtractComments(n.Doc)
 				u := p.TypesInfo.Defs[n.Name].(*types.Func)
 				o := internal.NewObject(n, n.Name, u, d)
 				f := &internal.Function{Object: o}
@@ -256,12 +270,37 @@ func newx(p *gopkg.Package) Package {
 					t := types.Unalias(internal.Deref(recv.Type()))
 					methods[t] = append(methods[t], f)
 				}
+			case *ast.StructType:
+				for _, f := range n.Fields.List {
+					d := internal.ExtractComments(f.Doc, f.Comment)
+					if len(f.Names) == 0 {
+						pos := token.NoPos
+						exp := f.Type
+						for pos == token.NoPos {
+							switch u := exp.(type) {
+							case *ast.Ident:
+								pos = u.Pos()
+							case *ast.SelectorExpr:
+								pos = u.Sel.Pos()
+							case *ast.StarExpr:
+								exp = u.X
+							case *ast.IndexExpr:
+								exp = u.X
+							default:
+								_, ok := u.(*ast.IndexListExpr)
+								must.BeTrueF(ok, "unexpected ast type as struct field: %T", u)
+								exp = u.(*ast.IndexListExpr).X
+							}
+						}
+						x.docs.Store(pos, d)
+					} else {
+						x.docs.Store(f.Pos(), d)
+					}
+				}
 			}
 			return true
 		})
 	}
-
-	x.doc = docx.ParseDocumentFromComments(docs...)
 
 	for _, t := range x.typenames.RangeNodes {
 		t.AddMethods(methods[t.Type()]...)
@@ -276,7 +315,9 @@ type xpkg struct {
 	p   *gopkg.Package
 	u   *Packages
 	dir *string
-	doc *docx.Meta
+	doc []string
+
+	docs syncx.Map[token.Pos, []string]
 
 	// fileset *token.FileSet
 	imports syncx.Map[string, Package]
@@ -284,6 +325,7 @@ type xpkg struct {
 	typenames MutationTypeNames
 	constants MutationConstants
 	functions MutationFunctions
+
 	// TODO signatures and results
 	// signatures internal.Objects[*types.Signature, *internal.Signature]
 }
@@ -312,11 +354,16 @@ func (x *xpkg) GoModule() *gopkg.Module {
 	return x.p.Module
 }
 
-func (x *xpkg) PackageDoc() *docx.Meta {
+func (x *xpkg) PackageDoc() []string {
 	return x.doc
 }
 
-func (x *xpkg) FieldDoc(t, f string) *docx.Meta {
+func (x *xpkg) DocByPos(p token.Pos) []string {
+	d, _ := x.docs.Load(p)
+	return d
+}
+
+func (x *xpkg) FieldDoc(t, f string) []string {
 	if s := x.typenames.ElementByName(t); s != nil {
 		return s.GetFieldDocByName(f)
 	}

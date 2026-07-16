@@ -4,6 +4,10 @@
 
 > 2026-07-16
 
+### Ci
+
+* add lint workflow
+
 ### Doc
 
 * update README

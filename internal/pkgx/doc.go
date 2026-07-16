@@ -124,3 +124,21 @@ func (d *Doc) String() string {
 	}
 	return fmt.Sprintf("tags:%s desc:%s", strings.Join(tags, ""), strings.Join(desc, ""))
 }
+
+func ExtractComments(cs ...*ast.CommentGroup) []string {
+	lines := make([]string, 0)
+	for _, c := range cs {
+		if c != nil {
+			for line := range strings.SplitSeq(c.Text(), "\n") {
+				line = strings.TrimPrefix(line, "/*")
+				line = strings.TrimPrefix(line, "//")
+				line = strings.TrimSuffix(line, "*/")
+				line = strings.TrimSpace(line)
+				if len(line) > 0 {
+					lines = append(lines, line)
+				}
+			}
+		}
+	}
+	return lines
+}

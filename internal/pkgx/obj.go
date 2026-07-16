@@ -7,7 +7,6 @@ import (
 	"iter"
 	"sort"
 
-	"github.com/xoctopus/x/docx/v2"
 	"github.com/xoctopus/x/syncx"
 )
 
@@ -23,12 +22,12 @@ type Object[U Exposer] interface {
 	Name() string
 	Node() ast.Node
 	Ident() *ast.Ident
-	Doc() *docx.Meta
+	Doc() []string
 	Type() types.Type
 	TypeName() string
 }
 
-func NewObject[U Exposer](n ast.Node, i *ast.Ident, obj U, d *docx.Meta) Object[U] {
+func NewObject[U Exposer](n ast.Node, i *ast.Ident, obj U, d []string) Object[U] {
 	return &object[U]{node: n, id: i, u: obj, doc: d}
 }
 
@@ -36,7 +35,7 @@ type object[U Exposer] struct {
 	u    U
 	node ast.Node
 	id   *ast.Ident
-	doc  *docx.Meta
+	doc  []string
 }
 
 func (o *object[U]) IsNil() bool {
@@ -62,7 +61,7 @@ func (o *object[U]) Exposer() U {
 	return o.u
 }
 
-func (o *object[U]) Doc() *docx.Meta {
+func (o *object[U]) Doc() []string {
 	return o.doc
 }
 

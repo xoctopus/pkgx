@@ -11,7 +11,6 @@ import (
 	"testing"
 
 	"github.com/xoctopus/x/contextx"
-	"github.com/xoctopus/x/docx/v2"
 	. "github.com/xoctopus/x/testx"
 
 	. "github.com/xoctopus/pkgx/pkg/pkgx"
@@ -50,11 +49,9 @@ func TestNewPackage(t *testing.T) {
 		Expect(t, pkg.ID(), Equal(testdata))
 		_ = pkg.Files()
 		_ = pkg.FileSet()
-		Expect(t, pkg.PackageDoc().Lines(), Equal([]string{
+		Expect(t, pkg.PackageDoc(), Equal([]string{
 			"Package testdata contains testdata for pkgx.",
 			"package desc following here",
-		}))
-		Expect(t, pkg.PackageDoc().Directives(), Equal([]string{
 			"+genx:enum",
 			"+genx:apis",
 			"+genx:model",
@@ -86,8 +83,12 @@ func TestNewPackage(t *testing.T) {
 		n := pkg.TypeNames().ElementByName("TypeA")
 		f := pkg.Functions().ElementByName("F")
 
-		Expect(t, pkg.FieldDoc("Structure", "name").Lines(), Equal([]string{"name comments"}))
-		Expect(t, pkg.FieldDoc("_", ""), BeNil[*docx.Meta]())
+		Expect(t, len(pkg.DocByPos(n.Node().Pos())), BeGt(0))
+		Expect(t, len(u.DocByPos(n.Node().Pos())), BeGt(0))
+		Expect(t, len(u.DocByPos(0)), Equal(0))
+
+		Expect(t, pkg.FieldDoc("Structure", "name"), Equal([]string{"name comments"}))
+		Expect(t, pkg.FieldDoc("_", ""), HaveLen[[]string](0))
 		Expect(t, pkg.Position(f.Node().Pos()).String(), Equal(filepath.Join(dir, "functions.go:22:1")))
 		Expect(t, pkg.ObjectOf(f.Ident()).Name(), Equal("F"))
 
@@ -107,7 +108,7 @@ func TestNewPackage(t *testing.T) {
 func ExamplePackage_Constants() {
 	for e := range pkg.Constants().Elements() {
 		fmt.Println(e.Name())
-		fmt.Println(e.Doc().Lines())
+		fmt.Println(e.Doc())
 		fmt.Printf("%s = %v\n", e.Name(), e.Value())
 	}
 
@@ -141,7 +142,7 @@ func ExamplePackage_Constants() {
 func ExamplePackage_TypeNames() {
 	for o := range pkg.TypeNames().Elements() {
 		fmt.Println(o.Name())
-		fmt.Println(o.Doc().Lines())
+		fmt.Println(o.Doc())
 
 		fmt.Println(o.Ident().Name)
 		methods := o.Methods().Keys()
@@ -159,15 +160,15 @@ func ExamplePackage_TypeNames() {
 
 	// Output:
 	// IntConstType
-	// [IntConstType defines a named constant type with integer underlying in a single `GenDecl` line1 line2 this is an inline comment]
+	// [IntConstType defines a named constant type with integer underlying in a single `GenDecl` line1 line2 +key1=val_key1_1 +key1=val_key1_2 +key2=val_key2 +key3 +key4= +key4=val_key4 this is an inline comment]
 	// IntConstType
 	//
 	// TypeA
-	// [GenDecl defines 2 type, TypeA and TypeB TypeA doc line1 line2]
+	// [GenDecl defines 2 type, TypeA and TypeB TypeA doc line1 line2 +tag1=val1_1 +tag1=val1_2]
 	// TypeA
 	//
 	// TypeB
-	// [GenDecl defines 2 type, TypeA and TypeB TypeB doc line1 line2]
+	// [GenDecl defines 2 type, TypeA and TypeB TypeB doc line1 line2 +tag1=val1_1 +tag1=val1_2]
 	// TypeB
 	//
 	// IntStringEnum
@@ -175,7 +176,7 @@ func ExamplePackage_TypeNames() {
 	// IntStringEnum
 	//
 	// Structure
-	// [Structure is a struct type for testing line1 line2]
+	// [Structure is a struct type for testing line1 line2 +ignore=name]
 	// Structure
 	// *Structure.Name: func() string
 	// Structure.String: func() string
@@ -206,7 +207,7 @@ func ExamplePackage_Functions() {
 	for o := range pkg.Functions().Elements() {
 		fmt.Println(o.Ident().Name)
 		fmt.Println(o.Type())
-		fmt.Println(o.Doc().Lines())
+		fmt.Println(o.Doc())
 	}
 
 	// Output:
