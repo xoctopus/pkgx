@@ -1,8 +1,22 @@
 
 <a name="HEAD"></a>
-## [HEAD](https://github.com/xoctopus/x/compare/testdata/v1.0.4...HEAD)
+## [HEAD](https://github.com/xoctopus/x/compare/v0.4.2...HEAD)
 
-> 0001-01-01
+> 2026-07-16
+
+### Doc
+
+* update README
+
+
+<a name="v0.4.2"></a>
+## [v0.4.2](https://github.com/xoctopus/x/compare/testdata/v1.0.4...v0.4.2)
+
+> 2026-07-16
+
+### Fix
+
+* **pkgx:** struct embedded field doc
 
 
 <a name="testdata/v1.0.4"></a>

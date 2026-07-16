@@ -17,9 +17,11 @@ export GIT_TAG    := ""
 export GIT_BRANCH := ""
 endif
 export BUILD_AT := $(shell date "+%Y%m%d%H%M%S")
+export MODULE_PATH
 
 # global env variables
-export GOWORK := off
+GOWORK ?= off
+export GOWORK
 
 # go build tools
 GOTEST  := go
@@ -48,6 +50,8 @@ show:
 	@echo "	git-chglog=$(shell which git-chglog) $(DEP_GIT_CHGLOG)"
 	@echo "	goimports-reviser=$(shell which goimports-reviser) $(DEP_GOIMPORTS_REVISER)"
 	@echo "	golangci-lint=$(shell which golangci-lint) $(DEP_GOLANGCI_LINT)"
+	@echo "envs:"
+	@echo "	GOWORK: $(GOWORK)"
 
 dep:
 	@echo "==> installing dependencies"
