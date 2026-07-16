@@ -110,3 +110,8 @@ type EachFieldHasComment struct {
 	// _ skip unnamed field
 	_ any
 }
+
+// will be skipped
+type _ struct {
+	_ any
+}
