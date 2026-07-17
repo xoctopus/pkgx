@@ -3,6 +3,7 @@ package pkgx
 import (
 	"context"
 	"go/token"
+	"os"
 
 	"github.com/xoctopus/x/contextx"
 	gopkg "golang.org/x/tools/go/packages"
@@ -27,6 +28,7 @@ var (
 	CtxLogger    = contextx.NewT[func(string, ...any)](contextx.WithDefault[func(string, ...any)](nil))
 	CtxLoadTests = contextx.NewT[bool](contextx.WithDefault(false))
 	CtxFileset   = contextx.NewT[*token.FileSet](contextx.WithDefault[*token.FileSet](nil))
+	CtxEnv       = contextx.NewT[[]string](contextx.WithDefault([]string{"GOWORK=off", "GOEXPERIMENT="}))
 )
 
 func Config(ctx context.Context) *gopkg.Config {
@@ -36,5 +38,6 @@ func Config(ctx context.Context) *gopkg.Config {
 		Logf:  CtxLogger.MustFrom(ctx),
 		Dir:   CtxWorkdir.MustFrom(ctx),
 		Tests: CtxLoadTests.MustFrom(ctx),
+		Env:   append(os.Environ(), CtxEnv.MustFrom(ctx)...),
 	}
 }
