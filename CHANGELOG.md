@@ -1,6 +1,22 @@
 
 <a name="HEAD"></a>
-## [HEAD](https://github.com/xoctopus/x/compare/v0.4.2...HEAD)
+## [HEAD](https://github.com/xoctopus/x/compare/v0.4.3...HEAD)
+
+> 2026-08-20
+
+### Chore
+
+* **deps:** bump github.com/xoctopus/x from 0.5.4 to 0.5.5
+* **deps:** bump golang.org/x/mod from 0.38.0 to 0.40.0
+* **deps:** bump lint actions
+
+### Feat
+
+* **pkgx:** with package load env context
+
+
+<a name="v0.4.3"></a>
+## [v0.4.3](https://github.com/xoctopus/x/compare/v0.4.2...v0.4.3)
 
 > 2026-07-16
 
@@ -11,6 +27,10 @@
 ### Doc
 
 * update README
+
+### Feat
+
+* **pkgx:** extract comments only when walk package
 
 
 <a name="v0.4.2"></a>
