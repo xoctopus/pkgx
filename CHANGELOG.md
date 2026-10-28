@@ -1,11 +1,23 @@
 
 <a name="HEAD"></a>
-## [HEAD](https://github.com/xoctopus/x/compare/v0.4.3...HEAD)
+## [HEAD](https://github.com/xoctopus/x/compare/v0.4.4...HEAD)
 
-> 2026-08-20
+> 2026-10-07
 
 ### Chore
 
+* **deps:** bump github.com/xoctopus/x from 0.5.8 to 0.5.9
+* **deps:** bump golang.org/x/tools from 0.49.0 to 0.51.0
+
+
+<a name="v0.4.4"></a>
+## [v0.4.4](https://github.com/xoctopus/x/compare/v0.4.3...v0.4.4)
+
+> 2026-08-28
+
+### Chore
+
+* bump Go to 1.27.0
 * **deps:** bump github.com/xoctopus/x from 0.5.4 to 0.5.5
 * **deps:** bump golang.org/x/mod from 0.38.0 to 0.40.0
 * **deps:** bump lint actions

@@ -1,6 +1,6 @@
 module github.com/xoctopus/pkgx
 
-go 1.27.0
+go 1.27.3
 
 require (
 	// xoctopus
